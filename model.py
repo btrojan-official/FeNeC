@@ -9,22 +9,13 @@ from utils.other import _get_single_class_examples
 
 class Knn_Kmeans_Logits:
     def __init__(self, config, device="cpu"):
+        
+        self.device = device
 
-        self.metrices = ["euclidean", "mahalanobis"]
-        self.weights = ["uniform", "distance"]
+        self.metric = config["metric"]
+        self.weight = config["weight"] 
 
         self.knn_k = config["knn_k"]
-        if config["metric"] in self.metrices:
-            self.metric = config["metric"]
-        else:
-            raise ValueError(f"Metric should be one of {self.metrices}")
-        
-        if config["weight"] in self.weights:
-            self.weight = config["weight"] 
-        else:
-            raise ValueError(f"Weight should be one of {self.weights}")
-
-        self.device = device
 
         self.num_of_shrinkages = config["num_of_shrinkages"]
         self.shrinkage_alpha_0 = config["shrinkage_alpha_0"]
@@ -40,17 +31,6 @@ class Knn_Kmeans_Logits:
         self.X_train = None
         self.y_train = None
         self.covMatrices = None
-
-    def to(self, device):
-
-        self.device = device
-
-        if self.X_train is not None and self.y_train is not None:
-            self.X_train = self.X_train.to(device)
-            self.y_train = self.y_train.to(device)
-
-        if self.covMatrices is not None:
-            self.covMatrices = self.covMatrices.to(device)
 
     def fit(self, X_train, y_train):
 
@@ -86,10 +66,6 @@ class Knn_Kmeans_Logits:
 
         X_test = X_test.to(self.device)
 
-        return self._predict(X_test)
-    
-    def _predict(self, X_test):
-
         if self.metric == "euclidean":
             distances = _euclidean(self.X_train, X_test, self.device)
         elif self.metric == "mahalanobis":
@@ -113,7 +89,6 @@ class Knn_Kmeans_Logits:
 
         if self.weight == "uniform": weights_matrix = torch.ones_like(nearest_neighbours_matrix, dtype=torch.float).to(self.device)
         elif self.weight == "distance": weights_matrix = 1 / torch.gather(distances, 1, knn_indices).to(self.device)
-        else: raise ValueError(f"Weight should be one of {self.weights}")
 
         counts.scatter_add_(dim=1, index=nearest_neighbours_matrix, src=(weights_matrix))            
 
@@ -136,39 +111,22 @@ class Knn_Kmeans_Logits:
         X_train = X_train.to(self.device)
         y_train = y_train.to(self.device)
 
-        uniqes = torch.unique(y_train, sorted=True).to(self.device)
+        classes_list = torch.unique(y_train, sorted=True).to(self.device)
 
-        for i in uniqes:
+        for i in classes_list:
             cov = _calc_single_covariance(X_train, y_train, i, self.device)
 
             for _ in range(self.num_of_shrinkages):
                 cov = _matrix_shrinkage(cov, self.shrinkage_alpha_0, self.shrinkage_alpha_1, self.device)
+                
             cov = _normalize_covariance_matrix(cov)
 
-            if i == uniqes[0]:
+            if i == classes_list[0]:
                 covariances = cov.clone().detach()
             else:
                 covariances = torch.cat((covariances, cov.clone().detach()))
         
         return covariances
-    
-    def replace_examples_with_mean(self):
-        
-        self.knn_k = 1
-
-        means = []
-        labels = []
-
-        for i in torch.unique(self.y_train, sorted=True):
-
-            single_class_examples = _get_single_class_examples(self.X_train, self.y_train, i, self.device)
-            mean = torch.mean(single_class_examples, dim=0).unsqueeze(0)
-
-            means.append(mean)
-            labels.append(i)
-
-        self.X_train = torch.cat(means).to(self.device)
-        self.y_train = torch.tensor(labels).to(self.device)
 
     def _kmeans(self, X_train):
         kmeans = KMeans(n_clusters=self.kmeans_k, random_state=self.kmeans_seed)
@@ -179,11 +137,3 @@ class Knn_Kmeans_Logits:
         cluster_centers_tensor = torch.tensor(cluster_centers, dtype=X_train.dtype)
 
         return cluster_centers_tensor
-    
-    def cov_mse(self, second_cov):
-        mse = torch.nn.MSELoss()
-        return mse(self.covMatrices, second_cov)
-    
-    def prototypes_mse(self, second_prototypes):
-        mse = torch.nn.MSELoss()
-        return mse(self.X_train, second_prototypes)
