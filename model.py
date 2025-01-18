@@ -1,11 +1,13 @@
 import torch
 import torch.nn.functional as F
+from torch.utils.data import DataLoader, TensorDataset
 
 from sklearn.cluster import KMeans
+from sklearn.model_selection import train_test_split
 
 from utils.metric_functions import _euclidean, _mahalanobis
 from utils.covMatrices_operations import _tukeys_transformation, _matrix_shrinkage, _normalize_covariance_matrix, _calc_single_covariance
-from utils.other import _get_single_class_examples
+from utils.other import _get_single_class_examples, _get_smallest_values_per_class
 
 class Knn_Kmeans_Logits:
     def __init__(self, config, device="cpu"):
@@ -26,11 +28,25 @@ class Knn_Kmeans_Logits:
 
         self.use_kmeans = config["use_kmeans"]
         self.kmeans_k = config["kmeans_k"]
-        self.kmeans_seed = config["kmeans_seed"]
+        self.sklearn_seed = config["sklearn_seed"]
 
         self.X_train = None
         self.y_train = None
         self.covMatrices = None
+
+        self.use_logits_mode_0 = config["use_logits_mode_0"]
+        if self.use_logits_mode_0:
+            self.logits_n_samples = config["logits_n_samples"]
+            self.logits_train_epochs = config["logits_train_epochs"]
+            self.logits_batch_size = config["logits_batch_size"]
+            self.logits_learning_rate = config["logits_learning_rate"]
+            self.logits_regularization = config["logits_regularization"]
+
+            self.parameters = torch.nn.ParameterDict({
+                "alpha": torch.nn.Parameter(torch.abs(torch.randn(1, device=self.device))) ,
+                "a": torch.nn.Parameter(torch.randn(1, device=self.device)),
+                "b": torch.nn.Parameter(torch.randn(1, device=self.device)),
+            })
 
     def fit(self, X_train, y_train):
 
@@ -52,19 +68,29 @@ class Knn_Kmeans_Logits:
                     new_X_train = torch.cat((new_X_train, self._kmeans(single_class_examples).to(self.device)))
                     new_y_train = torch.cat((new_y_train, torch.full((self.kmeans_k,), i.item()).to(self.device)))
 
-            X_train = new_X_train.float()
-            y_train = new_y_train
+            if self.tukey_lambda < 1:
+                print("WARNING! All values in centroids smaller than 0 were set to 0")
+                new_X_train[new_X_train < 0] = 0
+
+            X_train_centroids = new_X_train.float()
+            y_train_centroids = new_y_train
 
         if self.X_train is None or self.y_train is None:
-            self.X_train = X_train.to(self.device)
-            self.y_train = y_train.to(self.device)
+            self.X_train = X_train_centroids.to(self.device)
+            self.y_train = y_train_centroids.to(self.device)
         else:
-            self.X_train = torch.cat((self.X_train, X_train.to(self.device)))
-            self.y_train = torch.cat((self.y_train, y_train.to(self.device)))
+            self.X_train = torch.cat((self.X_train, X_train_centroids.to(self.device)))
+            self.y_train = torch.cat((self.y_train, y_train_centroids.to(self.device)))
+
+        if self.use_logits_mode_0:
+            self._train_logits(X_train, y_train)
     
     def predict(self, X_test):
+        if self.use_logits_mode_0:
+            return self._predict_with_logits(X_test.to(self.device))
+        return self._predict_with_majority_voting(X_test.to(self.device))
 
-        X_test = X_test.to(self.device)
+    def _predict_with_majority_voting(self, X_test):
 
         if self.metric == "euclidean":
             distances = _euclidean(self.X_train, X_test, self.device)
@@ -129,7 +155,7 @@ class Knn_Kmeans_Logits:
         return covariances
 
     def _kmeans(self, X_train):
-        kmeans = KMeans(n_clusters=self.kmeans_k, random_state=self.kmeans_seed)
+        kmeans = KMeans(n_clusters=self.kmeans_k, random_state=self.sklearn_seed)
         kmeans.fit(X_train.cpu().numpy())
 
         cluster_centers = kmeans.cluster_centers_
@@ -137,3 +163,68 @@ class Knn_Kmeans_Logits:
         cluster_centers_tensor = torch.tensor(cluster_centers, dtype=X_train.dtype)
 
         return cluster_centers_tensor
+
+    def _train_logits(self, X_train, y_train):
+
+        if self.metric == "euclidean":
+            distances = _euclidean(self.X_train, X_train, self.device)
+        elif self.metric == "mahalanobis":
+            distances = _mahalanobis(self.X_train, self.y_train, X_train, self.covMatrices, self.tukey_lambda, self.device, self.norm_in_mahalanobis)
+
+        closest_distances = _get_smallest_values_per_class(distances, self.y_train, self.logits_n_samples)
+
+        train_data, val_data, train_labels, val_labels = train_test_split(closest_distances, y_train, test_size=0.2, random_state=self.sklearn_seed)
+
+        trainloader = DataLoader(TensorDataset(train_data, train_labels), batch_size=self.logits_batch_size, shuffle=True)
+        valloader = DataLoader(TensorDataset(val_data, val_labels), batch_size=self.logits_batch_size, shuffle=True)
+
+        optimizer = torch.optim.Adam(self.parameters.parameters(), lr=self.logits_learning_rate)
+        criterion = torch.nn.CrossEntropyLoss()
+
+        for epoch in range(self.logits_train_epochs):
+            running_loss = []
+            for batch_id, (data, target) in enumerate(trainloader):
+                optimizer.zero_grad()
+
+                output = self._calculate_logits(data)
+
+                loss = criterion(output, target.to(self.device).long())
+
+                loss.backward()
+                optimizer.step()
+
+                running_loss.append(loss.item())
+
+            print(f"Epoch {epoch} Loss: {sum(running_loss) / len(running_loss)}")
+
+    def _calculate_logits(self, data):
+        """
+        Predict class probabilities using logits.
+
+        Args:
+            data (torch.Tensor): Tensor of shape (batch_size, num_classes, n_closest_samples) containing input data.
+
+        Returns:
+            torch.Tensor: Tensor of shape (batch_size, num_classes) containing class probabilities.
+        """
+
+        data_transformed = self.parameters['a'] + self.parameters['b'] * torch.log(data + 1e-10)
+        data_activated = F.leaky_relu(data_transformed, negative_slope=0.01)
+        data_sum = data_activated.sum(dim=-1)
+        logits = F.softplus(self.parameters['alpha']) * data_sum # F.softplus(self.parameters['alpha'])
+
+        return logits
+
+    def _predict_with_logits(self, X_test):
+        if self.metric == "euclidean":
+            distances = _euclidean(self.X_train, X_test, self.device)
+        elif self.metric == "mahalanobis":
+            distances = _mahalanobis(self.X_train, self.y_train, X_test, self.covMatrices, self.tukey_lambda, self.device, self.norm_in_mahalanobis)
+
+        closest_distances = _get_smallest_values_per_class(distances, self.y_train, self.logits_n_samples)
+
+        logits = self._calculate_logits(closest_distances)
+        prediction = logits.argmax(dim=1)
+
+        return prediction
+      
