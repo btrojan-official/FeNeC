@@ -68,6 +68,7 @@ class Knn_Kmeans_Logits:
                     new_X_train = torch.cat((new_X_train, self._kmeans(single_class_examples).to(self.device)))
                     new_y_train = torch.cat((new_y_train, torch.full((self.kmeans_k,), i.item()).to(self.device)))
 
+            # Tukey transformation with lambda < 0 can't handle negative values
             if self.tukey_lambda < 1:
                 print("WARNING! All values in centroids smaller than 0 were set to 0")
                 new_X_train[new_X_train < 0] = 0
