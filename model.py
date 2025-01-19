@@ -14,6 +14,8 @@ class Knn_Kmeans_Logits:
         
         self.device = device
 
+        self.current_task = -1
+
         self.metric = config["metric"]
         self.weight = config["weight"] 
 
@@ -40,7 +42,8 @@ class Knn_Kmeans_Logits:
             self.logits_train_epochs = config["logits_train_epochs"]
             self.logits_batch_size = config["logits_batch_size"]
             self.logits_learning_rate = config["logits_learning_rate"]
-            self.logits_regularization = config["logits_regularization"]
+            self.logits_regularization_strength = config["logits_regularization_strength"]
+            self.logits_patience = config["logits_patience"]
 
             self.parameters = torch.nn.ParameterDict({
                 "alpha": torch.nn.Parameter(torch.abs(torch.randn(1, device=self.device))) ,
@@ -49,6 +52,8 @@ class Knn_Kmeans_Logits:
             })
 
     def fit(self, X_train, y_train):
+
+        self.current_task += 1
 
         if self.X_train is None or self.y_train is None:
             if self.metric == "mahalanobis":
@@ -167,6 +172,12 @@ class Knn_Kmeans_Logits:
 
     def _train_logits(self, X_train, y_train):
 
+        prev_task_params = {
+            "alpha": self.parameters["alpha"].clone().item(),
+            "a": self.parameters["a"].clone().item(),
+            "b": self.parameters["b"].clone().item(),
+        }
+
         if self.metric == "euclidean":
             distances = _euclidean(self.X_train, X_train, self.device)
         elif self.metric == "mahalanobis":
@@ -182,22 +193,81 @@ class Knn_Kmeans_Logits:
         optimizer = torch.optim.Adam(self.parameters.parameters(), lr=self.logits_learning_rate)
         criterion = torch.nn.CrossEntropyLoss()
 
+        self._epochs_without_improvement = 0
+        self._best_val_loss = float("inf")
+
         for epoch in range(self.logits_train_epochs):
-            running_loss = []
-            for batch_id, (data, target) in enumerate(trainloader):
-                optimizer.zero_grad()
+            running_loss, regularizaion_loss = self._logits_training_loop(trainloader, prev_task_params, optimizer, criterion)
+            val_loss, accuracy = self._logits_validation_loop(valloader, criterion)
 
+            print(f"Epoch [{epoch+1}|{self.logits_train_epochs}] Loss: {sum(running_loss) / len(running_loss)} (in this regularization: {sum(regularizaion_loss) / len(regularizaion_loss)}) ||| Validation Loss: {sum(val_loss) / len(val_loss)}, Val accuracy: {accuracy}")
+
+            if(self.early_stopping(val_loss)):
+                print(f"Early stopping at epoch {epoch+1}")
+                break
+
+    def early_stopping(self, val_loss):
+        val_loss_value = sum(val_loss) / len(val_loss)
+
+        if val_loss_value < self._best_val_loss:
+            self._best_val_loss = val_loss_value
+            self._epochs_without_improvement = 0
+        else:
+            self._epochs_without_improvement += 1
+
+        if self._epochs_without_improvement == self.logits_patience:
+            return True
+        return False
+    
+    def _logits_training_loop(self, trainloader, prev_task_params, optimizer, criterion):
+
+        running_loss = []
+        regularizaion_loss = []
+
+        for data, target in trainloader:
+            optimizer.zero_grad()
+
+            output = self._calculate_logits(data)
+
+            loss = criterion(output, target.to(self.device).long())
+            reg_loss = self._calc_logits_regularization(prev_task_params)
+            loss += reg_loss * self.logits_regularization_strength
+
+            loss.backward()
+            optimizer.step()
+
+            running_loss.append(loss.item())
+            regularizaion_loss.append(reg_loss.item()*self.logits_regularization_strength)
+
+        return running_loss, regularizaion_loss
+
+    def _logits_validation_loop(self, valloader, criterion):
+        val_loss = []
+        accuracy = []
+
+        with torch.no_grad():
+            for data, target in valloader:
                 output = self._calculate_logits(data)
+                val_loss.append(criterion(output, target.to(self.device).long()).item())
+                accuracy.append([self._count_correct_guesses(output, target.to(self.device).long()), len(target)])
+        
+        acc = torch.sum(torch.tensor(accuracy, dtype=torch.float)[:,0], dim=0) / torch.sum(torch.tensor(accuracy, dtype=torch.float)[:,1], dim=0)
+        
+        return val_loss, acc
 
-                loss = criterion(output, target.to(self.device).long())
+    def _calc_logits_regularization(self, prev_task_params):
+        # Applies L2 regularization
 
-                loss.backward()
-                optimizer.step()
+        if self.current_task == 0:
+            return torch.tensor(0.0, device=self.device)
 
-                running_loss.append(loss.item())
+        regularizaion_loss = torch.tensor(0.0, device=self.device)
 
-            print(f"Epoch {epoch} Loss: {sum(running_loss) / len(running_loss)}")
+        for param_key in self.parameters:
+            regularizaion_loss += torch.sum((self.parameters[param_key] - prev_task_params[param_key]) ** 2)
 
+        return regularizaion_loss
+    
     def _calculate_logits(self, data):
         """
         Predict class probabilities using logits.
@@ -228,4 +298,11 @@ class Knn_Kmeans_Logits:
         prediction = logits.argmax(dim=1)
 
         return prediction
-      
+
+    def _count_correct_guesses(self, logits, targets):
+    
+        predicted_classes = torch.argmax(logits, dim=1)
+        
+        correct_guesses = (predicted_classes == targets).sum().item()
+        
+        return correct_guesses
