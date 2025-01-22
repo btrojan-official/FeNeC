@@ -10,7 +10,7 @@ from utils.covMatrices_operations import _tukeys_transformation, _matrix_shrinka
 from utils.other import _get_single_class_examples, _get_smallest_values_per_class
 
 class Knn_Kmeans_Logits:
-    def __init__(self, config, device="cpu", model_type):
+    def __init__(self, config, model_type, device="cpu"):
         
         self.device = device
         self.model_type = model_type
