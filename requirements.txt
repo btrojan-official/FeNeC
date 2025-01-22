@@ -1,0 +1,5 @@
+numpy==1.22.0
+torch==2.5.1
+scikit-learn==1.6.1
+h5py==3.12.1
+torchvision==0.20.1
