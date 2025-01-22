@@ -152,8 +152,6 @@ def main():
         # Create model
         model = Knn_Kmeans_Logits(trial_config, device=device)
         
-        return 0
-        
         for i in range(args.num_of_tasks):
             X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
             model.fit(X_train, y_train)
