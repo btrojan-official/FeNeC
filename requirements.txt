@@ -5,3 +5,4 @@ torchvision
 optuna
 plotly
 kaleido
+pandas

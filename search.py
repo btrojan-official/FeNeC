@@ -42,7 +42,7 @@ def get_config(trial, model: str, use_logits: bool):
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
-            "shrinkage_alpha_1": 0,
+            "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
             "norm_in_mahalanobis": False,
             "knn_k": trial.suggest_int("knn_k", 1, 20),
             "use_kmeans": True,
@@ -76,7 +76,7 @@ def get_config(trial, model: str, use_logits: bool):
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
-            "shrinkage_alpha_1": 0,
+            "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
             "norm_in_mahalanobis": False,
             "knn_k": 1,  # fixed
             "use_kmeans": True,
