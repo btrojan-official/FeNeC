@@ -63,3 +63,13 @@ python search.py \
     --output_file searches_results/cifar100_resnet_no_logits_QMCSampler.csv \
     --sampler QMCSampler \
     --result_dir searches_results/cifar100_resnet_no_logits_QMCSampler
+
+  python search.py \
+    --dataset tinyimagenet \
+    --model resnet \
+    --use_logits false \
+    --num_of_trials 600 \
+    --num_of_tasks 6 \
+    --output_file searches_results/tinyimagenet_resnet_no_logits_TPESampler.csv \
+    --sampler TPESampler \
+    --result_dir searches_results/tinyimagenet_resnet_no_logits_TPESampler
