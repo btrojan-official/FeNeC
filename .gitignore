@@ -7,3 +7,6 @@ CIFAR_100_incremental_T_5_table_1
 CIFAR_100_incremental_T_5_table_1.7z
 
 venv
+
+.token
+.DS_Store

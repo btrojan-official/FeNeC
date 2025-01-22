@@ -56,7 +56,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
-            "tukey_lambda": trial.suggest_float("tukey_lambda", 0, 1),
+            "tukey_lambda": trial.suggest_float("tukey_lambda", 0.001, 1),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
             "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
@@ -96,7 +96,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
-            "tukey_lambda": trial.suggest_float("tukey_lambda", 0, 1),
+            "tukey_lambda": trial.suggest_float("tukey_lambda", 0.001, 1),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
             "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
