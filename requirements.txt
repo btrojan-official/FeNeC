@@ -6,3 +6,4 @@ optuna
 plotly
 kaleido
 pandas
+pandas

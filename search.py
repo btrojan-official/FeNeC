@@ -146,24 +146,28 @@ def main():
     )
 
     def objective(trial):
-        # Sample config
-        trial_config = get_config(trial, args.model, args.use_logits)
+        try:
+            # Sample config
+            trial_config = get_config(trial, args.model, args.use_logits)
 
-        # Create model
-        model = Knn_Kmeans_Logits(trial_config, device=device)
-        
-        for i in range(args.num_of_tasks):
-            X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
-            model.fit(X_train, y_train)
+            # Create model
+            model = Knn_Kmeans_Logits(trial_config, device=device)
+            
+            for i in range(args.num_of_tasks):
+                X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
+                model.fit(X_train, y_train)
 
-        # Evaluate on the last task
-        predictions = model.predict(X_test)
-        acc = (torch.sum((y_test.flatten().to(device) == predictions).int()) 
-               / X_test.shape[0] * 100).item()
+            # Evaluate on the last task
+            predictions = model.predict(X_test)
+            acc = (torch.sum((y_test.flatten().to(device) == predictions).int()) 
+                   / X_test.shape[0] * 100).item()
 
-        # We want to maximize accuracy, so the objective is the negative loss.
-        # However, if we specify direction="maximize", we can just return `acc`.
-        return acc
+            # We want to maximize accuracy, so the objective is the negative loss.
+            # However, if we specify direction="maximize", we can just return `acc`.
+            return acc
+        except Exception as e:
+            print(f"Error during trial: {e}")
+            return 0.4
 
     # Create study (tell optuna we want to maximize accuracy)
     study = optuna.create_study(direction="maximize", sampler=sampler)
