@@ -10,10 +10,10 @@ from utils.covMatrices_operations import _tukeys_transformation, _matrix_shrinka
 from utils.other import _get_single_class_examples, _get_smallest_values_per_class
 
 class Knn_Kmeans_Logits:
-    def __init__(self, config, device="cpu"):
+    def __init__(self, config, device="cpu", model_type="resnet" | "vit"):
         
         self.device = device
-
+        self.model_type = model_type
         self.current_task = -1
 
         self.metric = config["metric"]
@@ -74,8 +74,9 @@ class Knn_Kmeans_Logits:
                     new_y_train = torch.cat((new_y_train, torch.full((self.kmeans_k,), i.item()).to(self.device)))
 
             # Tukey transformation with lambda < 0 can't handle negative values
-            if self.tukey_lambda < 1:
-                print("WARNING! All values in centroids smaller than 0 were set to 0")
+            # TODO: It is important to better handle resnet case
+
+            if self.model_type == "resnet":
                 new_X_train[new_X_train < 0] = 0
 
             X_train_centroids = new_X_train.float()
