@@ -1,0 +1,9 @@
+torch
+scikit-learn
+h5py
+torchvision
+optuna
+plotly
+kaleido
+pandas
+pandas
