@@ -44,9 +44,9 @@ def get_config(trial, model: str, use_logits: bool):
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
             "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
             "norm_in_mahalanobis": False,
-            "knn_k": trial.suggest_int("knn_k", 1, 20),
+            "knn_k": trial.suggest_int("knn_k", 1, 50),
             "use_kmeans": True,
-            "kmeans_k": trial.suggest_int("kmeans_k", 1, 20),
+            "kmeans_k": trial.suggest_int("kmeans_k", 20, 50),
             "sklearn_seed": 42,
             "use_logits_mode_0": False,
         }
@@ -56,14 +56,14 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
-            "tukey_lambda": trial.suggest_float("tukey_lambda", 0.001, 1),
+            "tukey_lambda": trial.suggest_float("tukey_lambda", 0.3, 0.6),
             "num_of_shrinkages": 2,
-            "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
-            "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0, 10),
+            "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0.5, 2),
+            "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0.5, 2),
             "norm_in_mahalanobis": True,
-            "knn_k": trial.suggest_int("knn_k", 1, 20),
+            "knn_k": trial.suggest_int("knn_k", 1, 50),
             "use_kmeans": True,
-            "kmeans_k": trial.suggest_int("kmeans_k", 1, 20),
+            "kmeans_k": trial.suggest_int("kmeans_k", 20, 50),
             "sklearn_seed": 42,
             "use_logits_mode_0": False,
         }
@@ -170,7 +170,8 @@ def main():
             return 0.4
 
     # Create study (tell optuna we want to maximize accuracy)
-    study = optuna.create_study(direction="maximize", sampler=sampler)
+    db_name = f"optuna_{args.model}_{args.dataset}.db"
+    study = optuna.create_study(direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}")
     study.optimize(objective, n_trials=args.num_of_trials)
 
     # Save all results to a CSV file
