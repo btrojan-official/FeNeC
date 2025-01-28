@@ -38,7 +38,7 @@ def get_config(trial, model: str, use_logits: bool):
         # Config dla use_logits=false, model="vit"
         return {
             "metric": "mahalanobis",
-            "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
+            "weight": "distance",
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
@@ -55,7 +55,7 @@ def get_config(trial, model: str, use_logits: bool):
         # Config dla use_logits=false, model="resnet"
         return {
             "metric": "mahalanobis",
-            "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
+            "weight": "distance",
             "tukey_lambda": trial.suggest_float("tukey_lambda", 0.3, 0.6),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0.5, 2),
@@ -72,7 +72,7 @@ def get_config(trial, model: str, use_logits: bool):
         # Config dla use_logits=true, model="vit"
         return {
             "metric": "mahalanobis",
-            "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
+            "weight": "distance",
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
@@ -95,7 +95,7 @@ def get_config(trial, model: str, use_logits: bool):
         # Config dla use_logits=true, model="resnet"
         return {
             "metric": "mahalanobis",
-            "weight": trial.suggest_categorical("weight", ["uniform", "distance"]),
+            "weight": "distance",
             "tukey_lambda": trial.suggest_float("tukey_lambda", 0.001, 1),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
