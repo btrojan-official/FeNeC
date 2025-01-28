@@ -46,7 +46,7 @@ def get_config(trial, model: str, use_logits: bool):
             "norm_in_mahalanobis": False,
             "knn_k": trial.suggest_int("knn_k", 1, 50),
             "use_kmeans": True,
-            "kmeans_k": trial.suggest_int("kmeans_k", 20, 50),
+            "kmeans_k": trial.suggest_int("kmeans_k", 1, 50),
             "sklearn_seed": 42,
             "use_logits_mode_0": False,
         }
