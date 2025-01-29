@@ -14,10 +14,9 @@ from utils.other import (_get_single_class_examples,
 
 
 class Knn_Kmeans_Logits:
-    def __init__(self, config, model_type, device="cpu"):
+    def __init__(self, config, device="cpu"):
 
         self.device = device
-        self.model_type = model_type
         self.current_task = -1
 
         self.metric = config["metric"]
@@ -30,7 +29,11 @@ class Knn_Kmeans_Logits:
         self.shrinkage_alpha_1 = config["shrinkage_alpha_1"]
         self.norm_in_mahalanobis = config["norm_in_mahalanobis"]
 
-        self.tukey_lambda = config["tukey_lambda"]
+        self.use_tukey = config["use_tukey"]
+        if not self.use_tukey:
+            self.tukey_lambda = 1
+        else:
+            self.tukey_lambda = config["tukey_lambda"]
 
         self.use_kmeans = config["use_kmeans"]
         self.kmeans_k = config["kmeans_k"]
@@ -114,9 +117,8 @@ class Knn_Kmeans_Logits:
                     )
 
             # Tukey transformation with lambda < 0 can't handle negative values
-            # TODO: It is important to better handle resnet case
-
-            if self.model_type == "resnet":
+            if self.use_tukey:
+                print("Warning!!! All values smaller than 0 were set to 0, bacuse tukey transformation can't handle negative values!")
                 new_X_train[new_X_train < 0] = 0
 
             X_train_centroids = new_X_train.float()

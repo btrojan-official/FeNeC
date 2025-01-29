@@ -2,6 +2,7 @@ config = {
     "metric": "mahalanobis", # ["euclidean", "mahalanobis"]
     "weight": "uniform", # ["uniform", "distance"]
 
+    "use_tukey": True,
     "tukey_lambda": 0.5,
     "num_of_shrinkages": 2,
     "shrinkage_alpha_0": 1,

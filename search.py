@@ -42,6 +42,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": "distance",
+            "use_tukey": False,
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
@@ -59,6 +60,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": "distance",
+            "use_tukey": True,
             "tukey_lambda": trial.suggest_float("tukey_lambda", 0.3, 0.6),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0.5, 2),
@@ -76,6 +78,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": "distance",
+            "use_tukey": False,
             "tukey_lambda": 1,
             "num_of_shrinkages": 1,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
@@ -99,6 +102,7 @@ def get_config(trial, model: str, use_logits: bool):
         return {
             "metric": "mahalanobis",
             "weight": "distance",
+            "use_tukey": True,
             "tukey_lambda": trial.suggest_float("tukey_lambda", 0.001, 1),
             "num_of_shrinkages": 2,
             "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0, 10),
@@ -154,7 +158,7 @@ def main():
             trial_config = get_config(trial, args.model, args.use_logits)
 
             # Create model
-            model = Knn_Kmeans_Logits(trial_config, device=device, model_type=args.model)
+            model = Knn_Kmeans_Logits(trial_config, device=device)
             
             for i in range(args.num_of_tasks):
                 X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
