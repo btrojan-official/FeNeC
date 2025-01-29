@@ -1,5 +1,7 @@
 import torch
+
 from utils.other import _get_single_class_examples
+
 
 def _calc_single_covariance(X_train, y_train, class_number, device):
 

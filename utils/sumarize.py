@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 
 directory = '/Users/mrfishpl/Desktop/GradKNN/searches_results'

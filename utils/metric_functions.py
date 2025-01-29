@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
+
 from utils.covMatrices_operations import _tukeys_transformation
+
 
 def _euclidean(X_train, X_test, device, training_batch_size=10000):
         

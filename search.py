@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 
 import argparse
-import json
-import torch
-import optuna
 import csv
+import json
 import os
-from optuna.visualization import plot_slice, plot_optimization_history, plot_contour
 
+import optuna
+import torch
 # Samplers (import as needed)
-from optuna.samplers import QMCSampler, TPESampler, GPSampler
+from optuna.samplers import GPSampler, QMCSampler, TPESampler
+from optuna.visualization import (plot_contour, plot_optimization_history,
+                                  plot_slice)
 
+from configs.config import \
+    config  # if you have a base config, though here we'll generate one dynamically
 # Your modules
 from model import Knn_Kmeans_Logits
-from configs.config import config  # if you have a base config, though here we'll generate one dynamically
 from utils.other import GradKNNDataloader
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

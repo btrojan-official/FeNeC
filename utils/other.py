@@ -1,8 +1,8 @@
+import h5py
 import torch
 import torchvision
 import torchvision.transforms as transforms
 
-import h5py
 
 def _get_single_class_examples(X_train, y_train, class_number, device):
     y_train = y_train.view(-1).to(device)
