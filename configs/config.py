@@ -2,17 +2,17 @@ config = {
     "metric": "mahalanobis", # ["euclidean", "mahalanobis"]
     "weight": "uniform", # ["uniform", "distance"]
 
-    "tukey_lambda": 0.4,
+    "tukey_lambda": 0.426125531097,
     "num_of_shrinkages": 2,
-    "shrinkage_alpha_0": 0.85,
-    "shrinkage_alpha_1": 1.55,
+    "shrinkage_alpha_0": 1.00603463636,
+    "shrinkage_alpha_1": 1.3132225481,
 
     "norm_in_mahalanobis": True,
 
-    "knn_k": 3,
+    "knn_k": 1,
 
     "use_kmeans": True,
-    "kmeans_k": 5,
+    "kmeans_k": 1,
     "sklearn_seed": 42,
 
     "use_logits_mode_0": False,

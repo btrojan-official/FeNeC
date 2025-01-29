@@ -267,8 +267,7 @@ class Knn_Kmeans_Logits:
         )
         valloader = DataLoader(
             TensorDataset(val_data, val_labels),
-            batch_size=self.logits_batch_size,
-            shuffle=True,
+            batch_size=self.logits_batch_size
         )
 
         optimizer = torch.optim.Adam(
