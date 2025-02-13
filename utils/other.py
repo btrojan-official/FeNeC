@@ -64,6 +64,8 @@ class GradKNNDataloader:
                 X_test = f["X_test"][:]
                 y_test = f["y_test"][:]
 
+                # print(f"FeCAM: {f["info"].attrs['accuracy']}")
+
                 # If prototypes are needed, load them; otherwise set None
                 if self.load_prototypes:
                     prototypes = f["prototypes"][:]

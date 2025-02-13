@@ -13,7 +13,7 @@ from utils.other import (_get_single_class_examples,
                          _get_smallest_values_per_class)
 
 
-class Knn_Kmeans_Logits:
+class GradKNN:
     def __init__(self, config, device="cpu"):
 
         self.device = device
