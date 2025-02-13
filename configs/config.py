@@ -10,10 +10,10 @@ config = {
 
     "norm_in_mahalanobis": False,
 
-    "knn_k": 1,
+    "knn_k": 7,
 
     "use_kmeans": True,
-    "kmeans_k": 1,
+    "kmeans_k": 21,
     "sklearn_seed": 42,
 
     "use_logits_mode_0": False,
