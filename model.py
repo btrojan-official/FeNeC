@@ -56,9 +56,6 @@ class GradKNN:
 
             self.parameters = torch.nn.ParameterDict(
                 {
-                    "alpha": torch.nn.Parameter(
-                        torch.abs(torch.randn(1, device=self.device))
-                    ),
                     "a": torch.nn.Parameter(torch.randn(1, device=self.device)),
                     "b": torch.nn.Parameter(torch.randn(1, device=self.device)),
                 }
@@ -236,7 +233,6 @@ class GradKNN:
     def _train_logits(self, X_train, y_train):
 
         prev_task_params = {
-            "alpha": self.parameters["alpha"].clone().item(),
             "a": self.parameters["a"].clone().item(),
             "b": self.parameters["b"].clone().item(),
         }
@@ -386,10 +382,7 @@ class GradKNN:
             data + 1e-10
         )
         data_activated = F.leaky_relu(data_transformed, negative_slope=0.01)
-        data_sum = data_activated.sum(dim=-1)
-        logits = (
-            F.softplus(self.parameters["alpha"]) * data_sum
-        )  # F.softplus(self.parameters['alpha'])
+        logits = data_activated.sum(dim=-1)
 
         return logits
 

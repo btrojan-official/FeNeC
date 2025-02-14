@@ -16,9 +16,9 @@ config = {
     "kmeans_k": 21,
     "sklearn_seed": 42,
 
-    "use_logits_mode_0": False,
-    "logits_n_samples": 6,
-    "logits_train_epochs":50,
+    "use_logits_mode_0": True,
+    "logits_n_samples": 5,
+    "logits_train_epochs":30,
     "logits_batch_size": 64,
     "logits_learning_rate": 1e-3,
     "logits_regularization_strength": 0,
