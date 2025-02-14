@@ -28,10 +28,9 @@ def plot_method_scores(df: pd.DataFrame) -> None:
                          method_data["mean_accuracy"] + method_data["std_accuracy"],
                          alpha=0.2)
     
-    plt.xlabel("Task")
+    plt.xlabel("Task number")
     plt.ylabel("Accuracy")
     plt.title("Method Performance Across Tasks")
-    plt.xticks(rotation=45)
     plt.legend(title="Methods")
     plt.grid(True, linestyle='--', alpha=0.6)
     
