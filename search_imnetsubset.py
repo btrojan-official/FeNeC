@@ -78,14 +78,6 @@ def merge_models(model0, model1, merged_device):
             model1.covMatrices.to(merged_device)
         ], dim=0)
     
-    # Merge logits parameters by averaging (if in use)
-    if merged_model.use_logits_mode_0:
-        merged_model.parameters = torch.nn.ParameterDict()  # Reinitialize ParameterDict
-        for key in model0.parameters:
-            # Average the parameter tensors from both models.
-            param_avg = (model0.parameters[key].to(merged_device) + model1.parameters[key].to(merged_device)) / 2
-            merged_model.parameters[key] = torch.nn.Parameter(param_avg)
-    
     # (Optional) Set current_task to the sum of tasks from both models.
     merged_model.current_task = model0.current_task + model1.current_task
 
