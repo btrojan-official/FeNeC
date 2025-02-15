@@ -50,7 +50,7 @@ def get_config(trial):
     }
 
 
-def merge_models(model0, model1, merged_device):
+def merge_models(model0, model1, trial_config, merged_device):
     """
     Merge the states of two models into one.
     - Concatenates the accumulated training data (X_train, y_train).
@@ -58,7 +58,7 @@ def merge_models(model0, model1, merged_device):
     - If using logits, averages the learned parameters.
     """
     # Create a new model instance on merged_device
-    merged_model = GradKNN(model0.__dict__.get("config", {}), device=merged_device)
+    merged_model = GradKNN(trial_config, device=merged_device)
     
     # Merge training data: assume both models have non-None X_train and y_train.
     merged_model.X_train = torch.cat([
@@ -150,7 +150,7 @@ def main():
                 model1_trained = future1.result()
             
             # Merge the models into a single instance on device0.
-            merged_model = merge_models(model0_trained, model1_trained, merged_device=device0)
+            merged_model = merge_models(model0_trained, model1_trained, trial_config, merged_device=device0)
             
             # Evaluate on the test set from the last task.
             X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(5)
