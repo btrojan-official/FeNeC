@@ -17,7 +17,7 @@ from optuna.visualization import (plot_contour, plot_optimization_history,
 from configs.config import \
     config  # if you have a base config, though here we'll generate one dynamically
 # Your modules
-from model import Knn_Kmeans_Logits
+from model import GradKNN
 from utils.other import GradKNNDataloader
 
 
