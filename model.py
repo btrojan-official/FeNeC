@@ -4,7 +4,7 @@ from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-from utils.covMatrices_operations import (_calc_single_covariance,
+from utils.cov_matrices_operations import (_calc_single_covariance,
                                           _matrix_shrinkage,
                                           _normalize_covariance_matrix,
                                           _tukeys_transformation)
@@ -45,6 +45,7 @@ class GradKNN:
 
         self.use_logits_mode_0 = config["use_logits_mode_0"]
         if self.use_logits_mode_0:
+            self.train_only_task_0 = config["train_only_task_0"]
             self.logits_n_samples = config["logits_n_samples"]
             self.logits_train_epochs = config["logits_train_epochs"]
             self.logits_batch_size = config["logits_batch_size"]
@@ -124,12 +125,16 @@ class GradKNN:
         if self.X_train is None or self.y_train is None:
             self.X_train = X_train_centroids.to(self.device)
             self.y_train = y_train_centroids.to(self.device)
+
+            if self.use_logits_mode_0:
+                self._train_logits(X_train, y_train)
         else:
             self.X_train = torch.cat((self.X_train, X_train_centroids.to(self.device)))
             self.y_train = torch.cat((self.y_train, y_train_centroids.to(self.device)))
 
-        if self.use_logits_mode_0:
-            self._train_logits(X_train, y_train)
+            if self.use_logits_mode_0 and not self.train_only_task_0:
+                self._train_logits(X_train, y_train)
+            
 
     def predict(self, X_test):
         if self.use_logits_mode_0:

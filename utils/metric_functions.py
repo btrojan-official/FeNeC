@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from utils.covMatrices_operations import _tukeys_transformation
+from utils.cov_matrices_operations import _tukeys_transformation
 
 
 def _euclidean(X_train, X_test, device, training_batch_size=10000):
@@ -27,7 +27,7 @@ def _euclidean(X_train, X_test, device, training_batch_size=10000):
 
     return dists
 
-def _mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, norm_in_mahalanobis=True, batch_size=16):
+def _mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, norm_in_mahalanobis=True, batch_size=4):
     EPSILON = 1e-8
 
     X_test = X_test.to(device)
