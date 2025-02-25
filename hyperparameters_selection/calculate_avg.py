@@ -8,6 +8,7 @@ import torch
 from model import GradKNN
 from utils.other import GradKNNDataloader
 
+print("Started")
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True,
@@ -118,6 +119,7 @@ def main():
 
     results = []
     for _, row in df.iterrows():
+        print(f"Processing row")
         # Build config from row
         config = build_config_from_row(row, args.model)
 
