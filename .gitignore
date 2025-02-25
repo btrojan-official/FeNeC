@@ -12,3 +12,4 @@ venv
 
 .token
 .DS_Store
+runs/
