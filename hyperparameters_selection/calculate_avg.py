@@ -51,6 +51,23 @@ def build_config_from_row(row, model):
             "sklearn_seed": 42,
             "use_logits_mode_0": False
         }
+    elif model == "vit":
+        return {
+            "metric": "mahalanobis",
+            "weight": "distance",
+            "use_tukey": False,
+            "tukey_lambda": 1,
+            "num_of_shrinkages": 1,
+            "shrinkage_alpha_0": float(row['shrinkage_alpha_0'].replace(',', '.')),
+            "shrinkage_alpha_1": float(row['shrinkage_alpha_1'].replace(',', '.')),
+            "norm_in_mahalanobis": False,
+            "knn_k": int(row['knn_k']),
+            "use_kmeans": True,
+            "kmeans_k": int(row['kmeans_k']),
+            "sklearn_seed": 42,
+            "use_logits_mode_0": False
+        }
+      
     else:  # For vit or other, adjust parameters as needed
         raise NotImplementedError("Model configuration for this scenario is not defined.")
 
