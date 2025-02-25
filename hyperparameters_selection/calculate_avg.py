@@ -83,7 +83,6 @@ def run_evaluation(dataset_path, config, num_of_tasks, name):
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
-    device = torch.device("mps")
 
     data_loader = GradKNNDataloader(
         num_tasks=num_of_tasks,
