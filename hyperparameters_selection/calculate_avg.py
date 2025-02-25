@@ -29,6 +29,8 @@ def parse_args():
                         help="Number of tasks to train/test on")
     parser.add_argument("--output_file", type=str, required=True,
                         help="Path to the output CSV file where results will be stored")
+    parser.add_argument("--sufix", type=str, default="",
+                        help="Optional suffix for the dataset files")
     return parser.parse_args()
 
 def build_config_from_row(row, model):
@@ -74,7 +76,7 @@ def build_config_from_row(row, model):
     else:  # For vit or other, adjust parameters as needed
         raise NotImplementedError("Model configuration for this scenario is not defined.")
 
-def run_evaluation(dataset_path, config, num_of_tasks, name):
+def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
     """
     Loads the dataset from 'dataset_path', instantiates a GradKNN model using 'config',
     trains across 'num_of_tasks', and returns the accuracy on each task and the average accuracy.
@@ -92,7 +94,8 @@ def run_evaluation(dataset_path, config, num_of_tasks, name):
         dataset_name=name,
         dataset_path=dataset_path,
         load_covariances=True,
-        load_prototypes=False
+        load_prototypes=False,
+        sufix=sufix
     )
     model = GradKNN(config, device=device)
 
@@ -126,9 +129,9 @@ def main():
         config = build_config_from_row(row, args.model)
 
         # Evaluate on 3 runs/data subfolders
-        last_acc_1, avg_acc_1 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name1)
-        last_acc_2, avg_acc_2 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name2)
-        last_acc_3, avg_acc_3 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name3)
+        last_acc_1, avg_acc_1 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name1, args.sufix)
+        last_acc_2, avg_acc_2 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name2, args.sufix)
+        last_acc_3, avg_acc_3 = run_evaluation(args.dataset, config, args.num_of_tasks, args.name3, args.sufix)
 
         # Compute average of last task accuracies and average of average accuracies
         avg_last_task_acc = (last_acc_1 + last_acc_2 + last_acc_3) / 3.0

@@ -42,7 +42,7 @@ def _get_smallest_values_per_class(data, labels, n_smallest):
     return result
 
 class GradKNNDataloader:
-    def __init__(self, num_tasks=6, dataset_name="resnet", load_covariances=False, load_prototypes=False, dataset_path="./data"):
+    def __init__(self, num_tasks=6, dataset_name="resnet", load_covariances=False, load_prototypes=False, dataset_path="./data", sufix=""):
         """
         This DataLoader class loads all tasks at once so they can be reused multiple times
         without re-reading from disk.
@@ -51,11 +51,12 @@ class GradKNNDataloader:
         self.num_tasks = num_tasks
         self.load_covariances = load_covariances
         self.load_prototypes = load_prototypes
+        self.sufix = sufix
         self.data = []
 
         # Load all tasks into memory during initialization
         for task_num in range(self.num_tasks):
-            current_file = f"{dataset_path}/{self.dataset_name}/task_{task_num}.hdf5"
+            current_file = f"{dataset_path}/{self.dataset_name}/task_{task_num}{self.sufix}.hdf5"
             with h5py.File(current_file, "r") as f:
                 X_train = f["X_train"][:]
                 y_train = f["y_train"][:]
