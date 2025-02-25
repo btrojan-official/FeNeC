@@ -1,3 +1,5 @@
+print("Script started")
+
 import argparse
 import csv
 import os
@@ -8,7 +10,7 @@ import torch
 from model import GradKNN
 from utils.other import GradKNNDataloader
 
-print("Started")
+print("Loaded modules")
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True,
