@@ -13,3 +13,4 @@ venv
 .token
 .DS_Store
 runs/
+run2.sh
