@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def plot_method_scores(df: pd.DataFrame) -> None:
+def plot_method_scores(df: pd.DataFrame, title: str) -> None:
     """
     Plots the mean and standard deviation of method scores across multiple runs for a single task.
     
@@ -12,6 +12,7 @@ def plot_method_scores(df: pd.DataFrame) -> None:
     """
 
     df_long = df.melt(id_vars=["method_name"], var_name="task", value_name="accuracy")
+    df_long["task"] = df_long["task"].astype(int)
     
     grouped = df_long.groupby(["method_name", "task"]).agg({
         "accuracy": ["mean", "std"]
@@ -30,7 +31,7 @@ def plot_method_scores(df: pd.DataFrame) -> None:
     
     plt.xlabel("Task number")
     plt.ylabel("Accuracy")
-    plt.title("Method Performance Across Tasks")
+    plt.title(title)
     plt.legend(title="Methods")
     plt.grid(True, linestyle='--', alpha=0.6)
     
