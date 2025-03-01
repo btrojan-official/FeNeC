@@ -27,16 +27,20 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
     
     for method in grouped["method_name"].unique():
         method_data = grouped[grouped["method_name"] == method]
-        plt.plot(method_data["task"], method_data["mean_accuracy"], marker='o', label=method)
+        plt.plot(method_data["task"], method_data["mean_accuracy"], marker='o', label=method, linewidth=2, markersize=8)
         plt.fill_between(method_data["task"], 
                          method_data["mean_accuracy"] - method_data["std_accuracy"],
                          method_data["mean_accuracy"] + method_data["std_accuracy"],
                          alpha=0.2)
     
+    method = grouped["method_name"].unique()[0]
+    method_data = grouped[grouped["method_name"] == method]
+    plt.xticks(method_data["task"])
+
     plt.xlabel("Task number", fontsize=19.2)
-    plt.ylabel("Accuracy", fontsize=19.2)
+    plt.ylabel("Accuracy (%)", fontsize=19.2)
     plt.title(title, fontsize=22.4)
-    plt.legend(title="Methods")
+    plt.legend(title="Methods", fontsize=18)
     plt.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
