@@ -13,9 +13,6 @@ def get_top_parameters(csv_path, output_folder):
     df.to_csv(output_file, index=False, sep=';')
 
 if __name__ == "__main__":
-    # Example usage:
-    # python get_top_parameters.py path/to/input.csv path/to/output/folder
-
     csv_path = sys.argv[1]
     output_folder = sys.argv[2]
 
