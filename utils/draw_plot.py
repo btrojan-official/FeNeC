@@ -51,9 +51,9 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
     plt.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
-    if os.path.exists(os.path.join("hyperparameters_selection", "plots")) == False:
-        os.makedirs(os.path.join("hyperparameters_selection", "plots"))
-    plt.savefig(os.path.join("hyperparameters_selection", "plots", title + ".pdf"), format="pdf", bbox_inches="tight")
+    if os.path.exists(os.path.join("plots")) == False:
+        os.makedirs(os.path.join("plots"))
+    plt.savefig(os.path.join("plots", title + ".pdf"), format="pdf", bbox_inches="tight")
     
     # Show plot
     plt.show()
