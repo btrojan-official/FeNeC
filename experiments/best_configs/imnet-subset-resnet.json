@@ -1,0 +1,1 @@
+{"metric":"mahalanobis","weight":"distance","use_tukey":true,"tukey_lambda":0.400037617,"num_of_shrinkages":2,"shrinkage_alpha_0":1.268886637,"shrinkage_alpha_1":0.668137479,"norm_in_mahalanobis":true,"knn_k":6,"use_kmeans":true,"kmeans_k":50,"sklearn_seed":42,"use_logits_mode_0":false}
