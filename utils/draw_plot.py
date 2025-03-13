@@ -30,7 +30,7 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
 
     plt.figure(figsize=(6, 4))
     
-    methods_names = ["FeCAM", "FeNeC", "FeLoC"]
+    methods_names = ["FeCAM", "FeNeC", "FeNeC-Log"]
 
     for i, method in enumerate(methods_names):
         method_data = grouped[grouped["method_name"] == method]
@@ -47,7 +47,7 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
     plt.xlabel("Task number", fontsize=19.2)
     plt.ylabel("Accuracy (%)", fontsize=19.2)
     plt.title(title, fontsize=22.4)
-    plt.legend(title="Methods", fontsize=17.5)
+    plt.legend(title="Methods", fontsize=14.5)
     plt.grid(True, linestyle='--', alpha=0.6)
 
     plt.tight_layout()
