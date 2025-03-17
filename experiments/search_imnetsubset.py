@@ -17,7 +17,7 @@ from optuna.visualization import (plot_contour, plot_optimization_history,
 from configs.config import \
     config  # if you have a base config, though here we'll generate one dynamically
 # Your modules
-from model import GradKNN
+from model import FeNeC
 from utils.other import GradKNNDataloader
 
 
@@ -58,7 +58,7 @@ def merge_models(model0, model1, trial_config, merged_device):
     - If using logits, averages the learned parameters.
     """
     # Create a new model instance on merged_device
-    merged_model = GradKNN(trial_config, device=merged_device)
+    merged_model = FeNeC(trial_config, device=merged_device)
     
     # Merge training data: assume both models have non-None X_train and y_train.
     merged_model.X_train = torch.cat([
@@ -134,8 +134,8 @@ def main():
             device1 = torch.device("cuda:1")
             
             # Create two model instances (they share the same config) on separate GPUs.
-            model0 = GradKNN(trial_config, device=device0)
-            model1 = GradKNN(trial_config, device=device1)
+            model0 = FeNeC(trial_config, device=device0)
+            model1 = FeNeC(trial_config, device=device1)
             
             # Split your 6 tasks between the two GPUs.
             # For example: tasks 0-2 on GPU0, tasks 3-5 on GPU1.

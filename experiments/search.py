@@ -15,7 +15,7 @@ from optuna.visualization import (plot_contour, plot_optimization_history,
 from configs.config import \
     config  # if you have a base config, though here we'll generate one dynamically
 # Your modules
-from model import GradKNN
+from model import FeNeC
 from utils.other import GradKNNDataloader
 
 
@@ -158,7 +158,7 @@ def main():
             trial_config = get_config(trial, args.model, args.use_logits)
 
             # Create model
-            model = GradKNN(trial_config, device=device)
+            model = FeNeC(trial_config, device=device)
             
             for i in range(args.num_of_tasks):
                 X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)

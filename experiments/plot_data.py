@@ -7,7 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.random_projection import SparseRandomProjection
 from utils.other import GradKNNDataloader
-from model import GradKNN
+from model import FeNeC
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -36,7 +36,7 @@ config = json.loads(args.config)
 
 # Fit the model on all tasks
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = GradKNN(config, device=device)
+model = FeNeC(config, device=device)
 
 X_all_tasks = []
 y_all_tasks = []

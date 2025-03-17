@@ -4,16 +4,16 @@ from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-from utils.cov_matrices_operations import (_calc_single_covariance,
-                                          _matrix_shrinkage,
-                                          _normalize_covariance_matrix,
-                                          _tukeys_transformation)
-from utils.metric_functions import _euclidean, _mahalanobis
-from utils.other import (_get_single_class_examples,
-                         _get_smallest_values_per_class)
+from utils.cov_matrices_operations import (calc_single_covariance,
+                                          matrix_shrinkage,
+                                          normalize_covariance_matrix,
+                                          tukeys_transformation)
+from utils.metric_functions import euclidean, mahalanobis
+from utils.other import (get_single_class_examples,
+                         get_smallest_values_per_class)
 
 
-class GradKNN:
+class FeNeC:
     def __init__(self, config, device="cpu"):
 
         self.device = device
@@ -43,8 +43,8 @@ class GradKNN:
         self.y_train = None
         self.covMatrices = None
 
-        self.use_logits_mode_0 = config["use_logits_mode_0"]
-        if self.use_logits_mode_0:
+        self.use_logits = config["use_logits"]
+        if self.use_logits:
             self.train_only_task_0 = config["train_only_task_0"]
             self.logits_n_samples = config["logits_n_samples"]
             self.logits_train_epochs = config["logits_train_epochs"]
@@ -70,7 +70,7 @@ class GradKNN:
             if self.metric == "mahalanobis":
                 self.covMatrices = (
                     self._calc_covariances(
-                        _tukeys_transformation(X_train, self.tukey_lambda), y_train
+                        tukeys_transformation(X_train, self.tukey_lambda), y_train
                     )
                     .float()
                     .to(self.device)
@@ -82,7 +82,7 @@ class GradKNN:
                         (
                             self.covMatrices,
                             self._calc_covariances(
-                                _tukeys_transformation(X_train, self.tukey_lambda),
+                                tukeys_transformation(X_train, self.tukey_lambda),
                                 y_train,
                             ),
                         )
@@ -94,7 +94,7 @@ class GradKNN:
             uniqes = torch.unique(y_train, sorted=True).to(self.device)
 
             for i in uniqes:
-                single_class_examples = _get_single_class_examples(
+                single_class_examples = get_single_class_examples(
                     X_train.to(self.device), y_train.to(self.device), i, self.device
                 )
                 if i == uniqes[0]:
@@ -126,27 +126,27 @@ class GradKNN:
             self.X_train = X_train_centroids.to(self.device)
             self.y_train = y_train_centroids.to(self.device)
 
-            if self.use_logits_mode_0:
+            if self.use_logits:
                 self._train_logits(X_train, y_train)
         else:
             self.X_train = torch.cat((self.X_train, X_train_centroids.to(self.device)))
             self.y_train = torch.cat((self.y_train, y_train_centroids.to(self.device)))
 
-            if self.use_logits_mode_0 and not self.train_only_task_0:
+            if self.use_logits and not self.train_only_task_0:
                 self._train_logits(X_train, y_train)
             
 
     def predict(self, X_test):
-        if self.use_logits_mode_0:
+        if self.use_logits:
             return self._predict_with_logits(X_test.to(self.device))
         return self._predict_with_majority_voting(X_test.to(self.device))
 
     def _predict_with_majority_voting(self, X_test):
 
         if self.metric == "euclidean":
-            distances = _euclidean(self.X_train, X_test, self.device)
+            distances = euclidean(self.X_train, X_test, self.device)
         elif self.metric == "mahalanobis":
-            distances = _mahalanobis(
+            distances = mahalanobis(
                 self.X_train,
                 self.y_train,
                 X_test,
@@ -209,14 +209,14 @@ class GradKNN:
         classes_list = torch.unique(y_train, sorted=True).to(self.device)
 
         for i in classes_list:
-            cov = _calc_single_covariance(X_train, y_train, i, self.device)
+            cov = calc_single_covariance(X_train, y_train, i, self.device)
 
             for _ in range(self.num_of_shrinkages):
-                cov = _matrix_shrinkage(
+                cov = matrix_shrinkage(
                     cov, self.shrinkage_alpha_0, self.shrinkage_alpha_1, self.device
                 )
 
-            cov = _normalize_covariance_matrix(cov)
+            cov = normalize_covariance_matrix(cov)
 
             if i == classes_list[0]:
                 covariances = cov.clone().detach()
@@ -243,9 +243,9 @@ class GradKNN:
         }
 
         if self.metric == "euclidean":
-            distances = _euclidean(self.X_train, X_train, self.device)
+            distances = euclidean(self.X_train, X_train, self.device)
         elif self.metric == "mahalanobis":
-            distances = _mahalanobis(
+            distances = mahalanobis(
                 self.X_train,
                 self.y_train,
                 X_train,
@@ -255,7 +255,7 @@ class GradKNN:
                 self.norm_in_mahalanobis,
             )
 
-        closest_distances = _get_smallest_values_per_class(
+        closest_distances = get_smallest_values_per_class(
             distances, self.y_train, self.logits_n_samples
         )
 
@@ -393,9 +393,9 @@ class GradKNN:
 
     def _predict_with_logits(self, X_test):
         if self.metric == "euclidean":
-            distances = _euclidean(self.X_train, X_test, self.device)
+            distances = euclidean(self.X_train, X_test, self.device)
         elif self.metric == "mahalanobis":
-            distances = _mahalanobis(
+            distances = mahalanobis(
                 self.X_train,
                 self.y_train,
                 X_test,
@@ -405,7 +405,7 @@ class GradKNN:
                 self.norm_in_mahalanobis,
             )
 
-        closest_distances = _get_smallest_values_per_class(
+        closest_distances = get_smallest_values_per_class(
             distances, self.y_train, self.logits_n_samples
         )
 

@@ -1,10 +1,10 @@
 import torch
 import torch.nn.functional as F
 
-from utils.cov_matrices_operations import _tukeys_transformation
+from utils.cov_matrices_operations import tukeys_transformation
 
 
-def _euclidean(X_train, X_test, device, training_batch_size=10000):
+def euclidean(X_train, X_test, device, training_batch_size=10000):
         
     X_test = X_test.clone().to(device)
     test_squared_norms = torch.sum(X_test ** 2, dim=1).unsqueeze(1)
@@ -27,14 +27,14 @@ def _euclidean(X_train, X_test, device, training_batch_size=10000):
 
     return dists
 
-def _mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, norm_in_mahalanobis=True, batch_size=4):
+def mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, norm_in_mahalanobis=True, batch_size=4):
     EPSILON = 1e-8
 
     X_test = X_test.to(device)
     X_test = (X_test.T / (torch.linalg.norm(X_test.T, axis=0) + EPSILON)).T
 
-    X_test = _tukeys_transformation(X_test, tukey_lambda)
-    curr_X_train = _tukeys_transformation(X_train.clone().detach(), tukey_lambda)
+    X_test = tukeys_transformation(X_test, tukey_lambda)
+    curr_X_train = tukeys_transformation(X_train.clone().detach(), tukey_lambda)
 
     f_num = covMatrices.shape[1]
     num_classes = covMatrices.shape[0] // f_num

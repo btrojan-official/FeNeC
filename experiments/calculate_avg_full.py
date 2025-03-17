@@ -7,7 +7,7 @@ import sys
 
 import pandas as pd
 import torch
-from model import GradKNN
+from model import FeNeC
 from utils.other import GradKNNDataloader
 
 print("Loaded modules")
@@ -97,7 +97,7 @@ def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
         load_prototypes=False,
         sufix=sufix
     )
-    model = GradKNN(config, device=device)
+    model = FeNeC(config, device=device)
 
     accuracies = []
     # Train on all tasks

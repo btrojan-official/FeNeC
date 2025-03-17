@@ -1,15 +1,15 @@
 import torch
 
-from utils.other import _get_single_class_examples
+from utils.other import get_single_class_examples
 
 
-def _calc_single_covariance(X_train, y_train, class_number, device):
+def calc_single_covariance(X_train, y_train, class_number, device):
 
-    single_class_examples = _get_single_class_examples(X_train, y_train, class_number, device)
+    single_class_examples = get_single_class_examples(X_train, y_train, class_number, device)
     
     return torch.cov(single_class_examples.T).to(device)
 
-def _matrix_shrinkage(cov_matrix, alpha_0, alpha_1, device):
+def matrix_shrinkage(cov_matrix, alpha_0, alpha_1, device):
 
     assert cov_matrix.shape[0] == cov_matrix.shape[1], "Covariance matrix must be square"
 
@@ -23,7 +23,7 @@ def _matrix_shrinkage(cov_matrix, alpha_0, alpha_1, device):
 
     return shrinkaged_cov_matrix.clone().detach().to(device)
 
-def _normalize_covariance_matrix(cov_matrix):
+def normalize_covariance_matrix(cov_matrix):
 
     diag_elements = torch.sqrt(torch.diag(cov_matrix))
     
@@ -33,7 +33,7 @@ def _normalize_covariance_matrix(cov_matrix):
     
     return normalized_cov_matrix
 
-def _tukeys_transformation(x, tukey_lambda):
+def tukeys_transformation(x, tukey_lambda):
     if tukey_lambda != 0:
         return torch.pow(x, tukey_lambda)
     else:
