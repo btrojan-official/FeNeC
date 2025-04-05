@@ -35,7 +35,7 @@ establish state-of-the-art results on several benchmarks.
 There you can find the alternative version of FeNeC code:
 https://github.com/gmum/FeNeC
 
-## Quick start
+## Python setup
 
 First clone the repository using git and after that enter the FeNeC directory
 ```bash
