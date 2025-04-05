@@ -5,9 +5,9 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
 from utils.cov_matrices_operations import (calc_single_covariance,
-                                          matrix_shrinkage,
-                                          normalize_covariance_matrix,
-                                          tukeys_transformation)
+                                           matrix_shrinkage,
+                                           normalize_covariance_matrix,
+                                           tukeys_transformation)
 from utils.metric_functions import euclidean, mahalanobis
 from utils.other import (get_single_class_examples,
                          get_smallest_values_per_class)
@@ -116,7 +116,9 @@ class FeNeC:
 
             # Tukey transformation with lambda < 0 can't handle negative values
             if self.use_tukey:
-                print("Warning!!! All values smaller than 0 were set to 0, bacuse tukey transformation can't handle negative values!")
+                print(
+                    "Warning!!! All values smaller than 0 were set to 0, bacuse tukey transformation can't handle negative values!"
+                )
                 new_X_train[new_X_train < 0] = 0
 
             X_train_centroids = new_X_train.float()
@@ -134,7 +136,6 @@ class FeNeC:
 
             if self.use_logits and not self.train_only_task_0:
                 self._train_logits(X_train, y_train)
-            
 
     def predict(self, X_test):
         if self.use_logits:
@@ -269,8 +270,7 @@ class FeNeC:
             shuffle=True,
         )
         valloader = DataLoader(
-            TensorDataset(val_data, val_labels),
-            batch_size=self.logits_batch_size
+            TensorDataset(val_data, val_labels), batch_size=self.logits_batch_size
         )
 
         optimizer = torch.optim.Adam(

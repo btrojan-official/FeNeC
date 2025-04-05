@@ -23,13 +23,26 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--model", type=str, choices=["vit", "resnet"], required=True)
-    parser.add_argument("--use_logits", type=lambda x: x.lower() == 'true', required=True)
+    parser.add_argument(
+        "--use_logits", type=lambda x: x.lower() == "true", required=True
+    )
     parser.add_argument("--num_of_trials", type=int, required=True)
     parser.add_argument("--num_of_tasks", type=int, required=True)
     parser.add_argument("--output_file", type=str, required=True)
-    parser.add_argument("--sampler", type=str, choices=["QMCSampler", "TPESampler", "GPSampler"], required=True)
-    parser.add_argument("--result_dir", type=str, required=True, help="Directory to save the result plots")
+    parser.add_argument(
+        "--sampler",
+        type=str,
+        choices=["QMCSampler", "TPESampler", "GPSampler"],
+        required=True,
+    )
+    parser.add_argument(
+        "--result_dir",
+        type=str,
+        required=True,
+        help="Directory to save the result plots",
+    )
     return parser.parse_args()
+
 
 def get_config(trial, model: str, use_logits: bool):
     """
@@ -92,8 +105,12 @@ def get_config(trial, model: str, use_logits: bool):
             "logits_n_samples": trial.suggest_int("logits_n_samples", 1, 20),
             "logits_train_epochs": trial.suggest_int("logits_train_epochs", 10, 50),
             "logits_batch_size": trial.suggest_int("logits_batch_size", 10, 100),
-            "logits_learning_rate": trial.suggest_float("logits_learning_rate", 1e-4, 1e-2, log=True),
-            "logits_regularization_strength": trial.suggest_float("logits_regularization_strength", 1, 1e4, log=True),
+            "logits_learning_rate": trial.suggest_float(
+                "logits_learning_rate", 1e-4, 1e-2, log=True
+            ),
+            "logits_regularization_strength": trial.suggest_float(
+                "logits_regularization_strength", 1, 1e4, log=True
+            ),
             "logits_patience": 5,
         }
 
@@ -116,13 +133,18 @@ def get_config(trial, model: str, use_logits: bool):
             "logits_n_samples": trial.suggest_int("logits_n_samples", 1, 20),
             "logits_train_epochs": trial.suggest_int("logits_train_epochs", 10, 50),
             "logits_batch_size": trial.suggest_int("logits_batch_size", 10, 100),
-            "logits_learning_rate": trial.suggest_float("logits_learning_rate", 1e-4, 1e-2, log=True),
-            "logits_regularization_strength": trial.suggest_float("logits_regularization_strength", 1, 1e4, log=True),
+            "logits_learning_rate": trial.suggest_float(
+                "logits_learning_rate", 1e-4, 1e-2, log=True
+            ),
+            "logits_regularization_strength": trial.suggest_float(
+                "logits_regularization_strength", 1, 1e4, log=True
+            ),
             "logits_patience": 5,
         }
 
     else:
         raise ValueError("Invalid combination of model and use_logits")
+
 
 def main():
     args = parse_args()
@@ -146,10 +168,10 @@ def main():
 
     # Prepare data loader once (this is optional; you can also do it in the objective if needed)
     data_loader = GradKNNDataloader(
-        num_tasks=args.num_of_tasks, 
+        num_tasks=args.num_of_tasks,
         dataset_name=args.dataset,
-        load_covariances=True, 
-        load_prototypes=False
+        load_covariances=True,
+        load_prototypes=False,
     )
 
     def objective(trial):
@@ -159,15 +181,20 @@ def main():
 
             # Create model
             model = FeNeC(trial_config, device=device)
-            
+
             for i in range(args.num_of_tasks):
-                X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
+                X_train, y_train, X_test, y_test, covariances, prototypes = (
+                    data_loader.get_data(i)
+                )
                 model.fit(X_train, y_train)
 
             # Evaluate on the last task
             predictions = model.predict(X_test)
-            acc = (torch.sum((y_test.flatten().to(device) == predictions).int()) 
-                   / X_test.shape[0] * 100).item()
+            acc = (
+                torch.sum((y_test.flatten().to(device) == predictions).int())
+                / X_test.shape[0]
+                * 100
+            ).item()
 
             # We want to maximize accuracy, so the objective is the negative loss.
             # However, if we specify direction="maximize", we can just return `acc`.
@@ -178,18 +205,20 @@ def main():
 
     # Create study (tell optuna we want to maximize accuracy)
     db_name = f"optuna_{args.model}_{args.dataset}.db"
-    study = optuna.create_study(direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}")
+    study = optuna.create_study(
+        direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}"
+    )
     study.optimize(objective, n_trials=args.num_of_trials)
 
     # Save all results to a CSV file
     trials = study.trials
-    with open(args.output_file, "w", newline='') as csvfile:
-        fieldnames = list(trials[0].params.keys()) + ['last_task_accuracy']
+    with open(args.output_file, "w", newline="") as csvfile:
+        fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
         for trial in trials:
-            row = {'last_task_accuracy': trial.value}
+            row = {"last_task_accuracy": trial.value}
             row.update(trial.params)
             writer.writerow(row)
 
@@ -205,10 +234,13 @@ def main():
     slice_fig.write_image(f"{args.result_dir}/plot_slice.png")
 
     optimization_history_fig = plot_optimization_history(study)
-    optimization_history_fig.write_image(f"{args.result_dir}/plot_optimization_history.png")
+    optimization_history_fig.write_image(
+        f"{args.result_dir}/plot_optimization_history.png"
+    )
 
     contour_fig = plot_contour(study)
     contour_fig.write_image(f"{args.result_dir}/plot_contour.png")
+
 
 if __name__ == "__main__":
     main()

@@ -25,7 +25,9 @@ def get_smallest_values_per_class(data, labels, n_smallest):
     num_classes = len(class_list)
 
     # Initialize output tensor
-    result = torch.full((data.size(0), num_classes, n_smallest), float('inf'), device=data.device)
+    result = torch.full(
+        (data.size(0), num_classes, n_smallest), float("inf"), device=data.device
+    )
 
     for cls in range(num_classes):
         # Mask columns belonging to the current class
@@ -33,7 +35,12 @@ def get_smallest_values_per_class(data, labels, n_smallest):
         class_values = data[:, mask]
 
         if class_values.size(1) > 0:
-            smallest_values, _ = torch.topk(class_values, k=min(n_smallest, class_values.size(1)), dim=1, largest=False)
-            result[:, cls, :smallest_values.size(1)] = smallest_values
+            smallest_values, _ = torch.topk(
+                class_values,
+                k=min(n_smallest, class_values.size(1)),
+                dim=1,
+                largest=False,
+            )
+            result[:, cls, : smallest_values.size(1)] = smallest_values
 
     return result

@@ -5,14 +5,16 @@ from utils.cov_matrices_operations import tukeys_transformation
 
 
 def euclidean(X_train, X_test, device, training_batch_size=10000):
-        
+
     X_test = X_test.clone().to(device)
-    test_squared_norms = torch.sum(X_test ** 2, dim=1).unsqueeze(1)
+    test_squared_norms = torch.sum(X_test**2, dim=1).unsqueeze(1)
 
-    for i in range(0, X_train.shape[0], training_batch_size): # nie wiem czy przy batch_size które nie jest dzielnikiem X_train.shape[0] weźmie wszystkie przykłady pod uwagę
-        X_train_batch = X_train[i:i + training_batch_size, :].clone().to(device)
+    for i in range(
+        0, X_train.shape[0], training_batch_size
+    ):  # nie wiem czy przy batch_size które nie jest dzielnikiem X_train.shape[0] weźmie wszystkie przykłady pod uwagę
+        X_train_batch = X_train[i : i + training_batch_size, :].clone().to(device)
 
-        train_squared_norms = torch.sum(X_train_batch ** 2, dim=1).unsqueeze(0)
+        train_squared_norms = torch.sum(X_train_batch**2, dim=1).unsqueeze(0)
 
         dot_product = torch.mm(X_test, X_train_batch.t())
 
@@ -27,7 +29,17 @@ def euclidean(X_train, X_test, device, training_batch_size=10000):
 
     return dists
 
-def mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, norm_in_mahalanobis=True, batch_size=4):
+
+def mahalanobis(
+    X_train,
+    y_train,
+    X_test,
+    covMatrices,
+    tukey_lambda,
+    device,
+    norm_in_mahalanobis=True,
+    batch_size=4,
+):
     EPSILON = 1e-8
 
     X_test = X_test.to(device)
@@ -40,8 +52,10 @@ def mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, nor
     num_classes = covMatrices.shape[0] // f_num
 
     cov_inv_list = []
-    for i in range(num_classes):  
-        cov_inv = torch.linalg.pinv(covMatrices[i * f_num:(i + 1) * f_num, :]).to(device)
+    for i in range(num_classes):
+        cov_inv = torch.linalg.pinv(covMatrices[i * f_num : (i + 1) * f_num, :]).to(
+            device
+        )
         cov_inv_list.append(cov_inv)
     cov_inv_stack = torch.stack(cov_inv_list)
 
@@ -53,7 +67,10 @@ def mahalanobis(X_train, y_train, X_test, covMatrices, tukey_lambda, device, nor
         cov_inv_per_batch = cov_inv_stack[y_train[start_idx:end_idx]]
         X_test_exp = X_test.unsqueeze(0).repeat(end_idx - start_idx, 1, 1)
         if norm_in_mahalanobis:
-            diff = (F.normalize(X_test_exp, p=2, dim=-1) - F.normalize(X_train_batch.unsqueeze(1), p=2, dim=-1)).float()
+            diff = (
+                F.normalize(X_test_exp, p=2, dim=-1)
+                - F.normalize(X_train_batch.unsqueeze(1), p=2, dim=-1)
+            ).float()
         else:
             diff = X_test_exp - X_train_batch.unsqueeze(1)
         batch_distances = torch.sqrt(torch.sum(diff @ cov_inv_per_batch * diff, dim=2))
