@@ -17,6 +17,16 @@ class FeNeCDataLoader:
         """
         This DataLoader class loads all tasks at once so they can be reused multiple times
         without re-reading from disk.
+        The data needs to be stored in h5py files with the following keys:
+            X_train, y_train, X_test, y_test, covariances, prototypes
+
+        Args:
+            num_tasks (int): Number of tasks to load.
+            dataset_name (str): Name of the dataset directory to load from.
+            load_covariances (bool): Whether to load covariance matrices or not.
+            load_prototypes (bool): Whether to load prototypes or not.
+            dataset_path (str): Path to the datasets directory.
+            sufix (str): Suffix to add to the file name.
         """
         self.dataset_name = dataset_name
         self.num_tasks = num_tasks
@@ -59,8 +69,21 @@ class FeNeCDataLoader:
 
     def get_data(self, task_num):
         """
-        Returns a tuple (X_train, y_train, X_test, y_test, covariances, prototypes)
+        Returns a tuple (
+            X_train (num_train_samples, num_features),
+            y_train (num_train_samples),
+            X_test (num_test_samples, num_features),
+            y_test (num_test_samples),
+            covariances (num_classes_in_task * num_features, num_features),
+            prototypes (num_classes_in_task, num_features)
+        )
         for the specified task number.
+
+        Args:
+            task_num (int): The task number to retrieve data for.
+
+        Returns:
+            tuple: A tuple containing the data for the specified task.
         """
         X_train = self.data[task_num]["X_train"]
         y_train = self.data[task_num]["y_train"]
@@ -72,12 +95,5 @@ class FeNeCDataLoader:
             self.data[task_num]["covariances"] if self.load_covariances else None
         )
         prototypes = self.data[task_num]["prototypes"] if self.load_prototypes else None
-        
-        print(f"X_train: {X_train.shape}")
-        print(f"y_train: {y_train.shape}")
-        print(f"X_test: {X_test.shape}")
-        print(f"y_test: {y_test.shape}")
-        print(f"covariances: {X_train.shape}")
-        print(f"prototypes: {prototypes.shape}")
 
         return X_train, y_train, X_test, y_test, covariances, prototypes

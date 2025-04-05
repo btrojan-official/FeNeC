@@ -8,7 +8,7 @@ config = {
     "shrinkage_alpha_1": 0,
     "norm_in_mahalanobis": False,
     "knn_k": 1,
-    "use_kmeans": True,  # if set to false, out method would act like a normal knn algorithm
+    "use_kmeans": True,  # if this is set to false, our method acts like a normal knn algorithm
     "kmeans_k": 5,
     "sklearn_seed": 42,
     "use_logits": False,

@@ -79,8 +79,8 @@ class FeNeC:
         Fits the model to the current task's training data.
 
         Args:
-            X_train (torch.Tensor): Feature tensor of the current task.
-            y_train (torch.Tensor): Label tensor of the current task.
+            X_train (torch.Tensor): Feature tensor of the current task. (num_train_samples, num_features)
+            y_train (torch.Tensor): Label tensor of the current task. (num_train_samples)
 
         Returns:
             None
@@ -170,7 +170,7 @@ class FeNeC:
         Predicts class labels for given test samples.
 
         Args:
-            X_test (torch.Tensor): Test samples to classify.
+            X_test (torch.Tensor): Test samples to classify. (num_test_samples, num_features)
 
         Returns:
             torch.Tensor: Predicted class labels.
