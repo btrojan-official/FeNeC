@@ -72,5 +72,12 @@ class FeNeCDataLoader:
             self.data[task_num]["covariances"] if self.load_covariances else None
         )
         prototypes = self.data[task_num]["prototypes"] if self.load_prototypes else None
+        
+        print(f"X_train: {X_train.shape}")
+        print(f"y_train: {y_train.shape}")
+        print(f"X_test: {X_test.shape}")
+        print(f"y_test: {y_test.shape}")
+        print(f"covariances: {X_train.shape}")
+        print(f"prototypes: {prototypes.shape}")
 
         return X_train, y_train, X_test, y_test, covariances, prototypes

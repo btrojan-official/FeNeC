@@ -2,6 +2,19 @@ import torch
 
 
 def get_single_class_examples(X_train, y_train, class_number, device):
+    """
+    Extracts all examples of a specified class from the training data.
+
+    Args:
+        X_train (torch.Tensor): Training feature tensor.
+        y_train (torch.Tensor): Corresponding label tensor.
+        class_number (int): Target class to extract examples for.
+        device (str): Device to perform the operation on ('cpu' or 'cuda').
+
+    Returns:
+        torch.Tensor: Subset of X_train containing only examples of the specified class.
+    """
+
     y_train = y_train.view(-1).to(device)
 
     indices = (y_train == class_number).nonzero(as_tuple=True)[0].to(device)

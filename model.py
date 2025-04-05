@@ -15,6 +15,18 @@ from utils.other import (get_single_class_examples,
 
 class FeNeC:
     def __init__(self, config, device="cpu"):
+        """
+        Initializes the FeNeC continual learning model.
+
+        Args:
+            config (dict): Configuration dictionary containing model parameters 
+                        such as metric type, KNN settings, shrinkage factors, 
+                        and whether to use logits or not.
+            device (str): Device to run the model on ('cpu', 'cuda' or 'mps').
+
+        Returns:
+            None
+        """
 
         self.device = device
         self.current_task = -1
@@ -63,6 +75,22 @@ class FeNeC:
             )
 
     def fit(self, X_train, y_train):
+        """
+        Fits the model to the current task's training data.
+
+        Args:
+            X_train (torch.Tensor): Feature tensor of the current task.
+            y_train (torch.Tensor): Label tensor of the current task.
+
+        Returns:
+            None
+
+        Notes:
+            - Computes and stores centroids (optionally using KMeans).
+            - Applies optional Tukey transformation.
+            - Calculates and stores class-wise covariance matrices if using Mahalanobis distance.
+            - Optionally trains a logits-based predictor.
+        """
 
         self.current_task += 1
 
@@ -138,6 +166,19 @@ class FeNeC:
                 self._train_logits(X_train, y_train)
 
     def predict(self, X_test):
+        """
+        Predicts class labels for given test samples.
+
+        Args:
+            X_test (torch.Tensor): Test samples to classify.
+
+        Returns:
+            torch.Tensor: Predicted class labels.
+
+        Notes:
+            - Uses either logits-based prediction or KNN with majority voting depending on configuration.
+        """
+
         if self.use_logits:
             return self._predict_with_logits(X_test.to(self.device))
         return self._predict_with_majority_voting(X_test.to(self.device))

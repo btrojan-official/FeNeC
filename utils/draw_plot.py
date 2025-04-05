@@ -8,15 +8,23 @@ import seaborn as sns
 
 def plot_method_scores(df: pd.DataFrame, title: str) -> None:
     """
-    Plots the mean and standard deviation of method scores across multiple runs for a single task.
+    Plots the average accuracy per task for different methods with error bands (std deviation).
 
-    Parameters:
-        df (pd.DataFrame): A dataframe containing method names and their scores across different tasks.
+    Args:
+        df (pd.DataFrame): A DataFrame in wide format with method names as rows and task accuracies as columns.
+                        Must contain a column 'method_name' and one column per task.
+        title (str): Title of the plot and also the filename (PDF) used to save the plot.
+
+    Behavior:
+        - Converts the input DataFrame to long format for seaborn plotting.
+        - Groups by method and task to compute mean and standard deviation of accuracy.
+        - Plots accuracy curves with error bands for methods: 'FeCAM', 'FeNeC', and 'FeNeC-Log'.
+        - Saves the plot as a PDF in the 'plots/' directory.
+        - Displays the plot using matplotlib.
     """
 
     markers = ["d", "o", "*"]
     linestyles = ["solid", "solid", "solid"]
-    # colors = ["#FF9F1C", "#2B9348", "#0077B6"]
     alpha = 0.6
 
     df_long = df.melt(id_vars=["method_name"], var_name="task", value_name="accuracy")
@@ -47,7 +55,7 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
             linewidth=2,
             markersize=8,
             alpha=alpha,
-        )  # , color=colors[i]
+        ) 
         plt.fill_between(
             method_data["task"],
             method_data["mean_accuracy"] - method_data["std_accuracy"],
@@ -72,5 +80,4 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
         os.path.join("plots", title + ".pdf"), format="pdf", bbox_inches="tight"
     )
 
-    # Show plot
     plt.show()

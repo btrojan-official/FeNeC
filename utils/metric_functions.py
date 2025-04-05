@@ -5,6 +5,19 @@ from utils.cov_matrices_operations import tukeys_transformation
 
 
 def euclidean(X_train, X_test, device, training_batch_size=10000):
+    """
+    Computes the pairwise Euclidean distances between test and training samples.
+
+    Args:
+        X_train (torch.Tensor): Training feature tensor of shape (n_train, n_features).
+        X_test (torch.Tensor): Test feature tensor of shape (n_test, n_features).
+        device (str): Device to perform computation on ('cpu' or 'cuda').
+        training_batch_size (int): Number of training samples to process per batch for efficiency.
+
+    Returns:
+        torch.Tensor: Distance matrix of shape (n_test, n_train), where each element [i, j]
+                    is the Euclidean distance between X_test[i] and X_train[j].
+    """
 
     X_test = X_test.clone().to(device)
     test_squared_norms = torch.sum(X_test**2, dim=1).unsqueeze(1)
@@ -40,6 +53,26 @@ def mahalanobis(
     norm_in_mahalanobis=True,
     batch_size=4,
 ):
+    """
+    Computes the pairwise Mahalanobis distances between test and training samples, 
+    using class-specific inverse covariance matrices.
+
+    Args:
+        X_train (torch.Tensor): Training feature tensor of shape (n_train, n_features).
+        y_train (torch.Tensor): Corresponding labels for X_train.
+        X_test (torch.Tensor): Test feature tensor of shape (n_test, n_features).
+        covMatrices (torch.Tensor): Stacked class-wise covariance matrices.
+        tukey_lambda (float): Lambda parameter for Tukey’s transformation.
+        device (str): Device to perform computation on ('cpu' or 'cuda').
+        norm_in_mahalanobis (bool): Whether to normalize features before computing distances.
+        batch_size (int): Number of training samples per batch for distance computation.
+
+    Returns:
+        torch.Tensor: Distance matrix of shape (n_test, n_train), where each element [i, j]
+                    is the Mahalanobis distance between X_test[i] and X_train[j],
+                    based on the class-specific covariance matrix.
+    """
+
     EPSILON = 1e-8
 
     X_test = X_test.to(device)
