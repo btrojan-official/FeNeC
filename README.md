@@ -93,7 +93,7 @@ After setting up you can run jupyter notebook with example training and evaluati
 To run experiments you should be in the repo directory use the following command:
 
 ```bash
-python -m experiments.name_of_the_file --arg1 ... --arg2 ... --argn ...
+python -m experiments.name_of_the_file_without_py --arg1 ... --arg2 ... --argn ...
 ```
 
 ## FeNeC implementation
