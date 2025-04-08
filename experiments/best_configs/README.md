@@ -1,0 +1,1 @@
+This folder contains the best configurations found by our team (Bartosz Trojan and Michal Karp). Files marked “NF” indicate configurations that did not converge to FeCAM. Some of the best configurations posted in the paper were found before the second component and are not in this folder.
