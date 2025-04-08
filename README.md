@@ -89,6 +89,13 @@ Method **FeNeC.predict** that predicts the class of given test samples takes one
 
 After setting up you can run jupyter notebook with example training and evaluating loop: **train_and_eval.ipynb** file. It uses **config.py** from *configs* directory as configuration for model.
 
+## Running experiments
+To run experiments you should be in the repo directory use the following command:
+
+```bash
+python -m experiments.name_of_the_file --arg1 ... --arg2 ... --argn ...
+```
+
 ## FeNeC implementation
 
 The actual FeNeC model code is in the **model.py** file. With some other helper functions in files in *utils* directory.
