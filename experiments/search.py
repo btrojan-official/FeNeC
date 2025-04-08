@@ -7,14 +7,12 @@ import os
 
 import optuna
 import torch
-# Samplers (import as needed)
+
 from optuna.samplers import GPSampler, QMCSampler, TPESampler
 from optuna.visualization import (plot_contour, plot_optimization_history,
                                   plot_slice)
 
-from configs.config import \
-    config  # if you have a base config, though here we'll generate one dynamically
-# Your modules
+from configs.config import config
 from model import FeNeC
 from utils.other import GradKNNDataloader
 
@@ -51,7 +49,6 @@ def get_config(trial, model: str, use_logits: bool):
     """
 
     if model == "vit" and not use_logits:
-        # Config dla use_logits=false, model="vit"
         return {
             "metric": "mahalanobis",
             "weight": "distance",
@@ -69,7 +66,6 @@ def get_config(trial, model: str, use_logits: bool):
         }
 
     elif model == "resnet" and not use_logits:
-        # Config dla use_logits=false, model="resnet"
         return {
             "metric": "mahalanobis",
             "weight": "distance",
@@ -87,7 +83,6 @@ def get_config(trial, model: str, use_logits: bool):
         }
 
     elif model == "vit" and use_logits:
-        # Config dla use_logits=true, model="vit"
         return {
             "metric": "mahalanobis",
             "weight": "distance",
@@ -115,7 +110,6 @@ def get_config(trial, model: str, use_logits: bool):
         }
 
     elif model == "resnet" and use_logits:
-        # Config dla use_logits=true, model="resnet"
         return {
             "metric": "mahalanobis",
             "weight": "distance",
@@ -149,7 +143,6 @@ def get_config(trial, model: str, use_logits: bool):
 def main():
     args = parse_args()
 
-    # Select optuna sampler
     if args.sampler == "QMCSampler":
         sampler = QMCSampler()
     elif args.sampler == "TPESampler":
@@ -157,7 +150,6 @@ def main():
     elif args.sampler == "GPSampler":
         sampler = GPSampler()
 
-    # Decide on device
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     elif torch.cuda.is_available():
@@ -166,7 +158,6 @@ def main():
         device = torch.device("cpu")
     print(f"Using device: {device}")
 
-    # Prepare data loader once (this is optional; you can also do it in the objective if needed)
     data_loader = GradKNNDataloader(
         num_tasks=args.num_of_tasks,
         dataset_name=args.dataset,
@@ -176,10 +167,8 @@ def main():
 
     def objective(trial):
         try:
-            # Sample config
             trial_config = get_config(trial, args.model, args.use_logits)
 
-            # Create model
             model = FeNeC(trial_config, device=device)
 
             for i in range(args.num_of_tasks):
@@ -188,7 +177,6 @@ def main():
                 )
                 model.fit(X_train, y_train)
 
-            # Evaluate on the last task
             predictions = model.predict(X_test)
             acc = (
                 torch.sum((y_test.flatten().to(device) == predictions).int())
@@ -196,21 +184,17 @@ def main():
                 * 100
             ).item()
 
-            # We want to maximize accuracy, so the objective is the negative loss.
-            # However, if we specify direction="maximize", we can just return `acc`.
             return acc
         except Exception as e:
             print(f"Error during trial: {e}")
             return 0.4
 
-    # Create study (tell optuna we want to maximize accuracy)
     db_name = f"optuna_{args.model}_{args.dataset}.db"
     study = optuna.create_study(
         direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}"
     )
     study.optimize(objective, n_trials=args.num_of_trials)
 
-    # Save all results to a CSV file
     trials = study.trials
     with open(args.output_file, "w", newline="") as csvfile:
         fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
@@ -225,11 +209,9 @@ def main():
     print(f"Best accuracy: {study.best_trial.value}")
     print(f"Best params: {study.best_trial.params}")
 
-    # Create result directory if it does not exist
     if not os.path.exists(args.result_dir):
         os.makedirs(args.result_dir)
 
-    # Generate and save plots
     slice_fig = plot_slice(study)
     slice_fig.write_image(f"{args.result_dir}/plot_slice.png")
 

@@ -11,7 +11,6 @@ from sklearn.random_projection import SparseRandomProjection
 from model import FeNeC
 from utils.other import GradKNNDataloader
 
-# Parse arguments
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config", type=str, required=True, help="JSON string of model configuration"
@@ -43,7 +42,6 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-# Load data
 data_loader = GradKNNDataloader(
     num_tasks=args.num_tasks,
     dataset_name=args.dataset_name,
@@ -53,10 +51,8 @@ data_loader = GradKNNDataloader(
     sufix="",
 )
 
-# Load config from JSON string
 config = json.loads(args.config)
 
-# Fit the model on all tasks
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = FeNeC(config, device=device)
 
@@ -66,20 +62,17 @@ y_all_tasks = []
 for task_idx in range(args.num_tasks):
     X_train, y_train, _, _, _, _ = data_loader.get_data(task_idx)
     model.fit(X_train.to(device), y_train.to(device))
-    # Collect data from each task for plotting
     X_all_tasks.append(X_train)
     y_all_tasks.append(y_train)
 
 X_all_tasks = torch.cat(X_all_tasks, dim=0)
 y_all_tasks = torch.cat(y_all_tasks, dim=0)
 
-# Select specific classes from the dataset for plotting
 selected_classes = [int(cls.strip()) for cls in args.selected_classes.split(",")]
 
 X_selected = []
 y_selected = []
 
-# Gather all data for the selected classes
 for cls in selected_classes:
     mask = y_all_tasks == cls
     if torch.any(mask):
@@ -94,11 +87,9 @@ else:
     print("No samples found for the selected classes.")
     exit(0)
 
-# Get centroids after transformation (k-means centroids)
 centroids = model.X_train.cpu().detach()
 centroid_labels = model.y_train.cpu().detach()
 
-# Filter centroids to only selected classes
 centroids_filtered = []
 centroid_labels_filtered = []
 for cls in selected_classes:
@@ -109,10 +100,8 @@ for cls in selected_classes:
 centroids_filtered = torch.cat(centroids_filtered, dim=0)
 centroid_labels_filtered = torch.cat(centroid_labels_filtered, dim=0)
 
-# Combine original data and centroids for dimensionality reduction
 X_combined = torch.cat([X_selected.cpu(), centroids_filtered], dim=0)
 
-# Apply the selected dimensionality reduction method
 if args.dim_reduction_method == "PCA":
     reducer = PCA(n_components=2)
 elif args.dim_reduction_method == "TSNE":
@@ -122,16 +111,13 @@ elif args.dim_reduction_method == "SRP":
 
 X_reduced_combined = reducer.fit_transform(X_combined)
 
-# Split reduced results back into original data and centroids
 X_reduced_data = X_reduced_combined[: X_selected.shape[0]]
 X_reduced_centroids = X_reduced_combined[X_selected.shape[0] :]
 
-# Plot results with different colors for each class
 plt.figure(figsize=(10, 8))
 import colorsys
 import random
 
-# Generate high saturation colors
 colors = [
     colorsys.hsv_to_rgb(i / len(selected_classes), 1.0, 1.0)
     for i in range(len(selected_classes))
@@ -149,7 +135,6 @@ for i, cls in enumerate(selected_classes):
         alpha=0.5,
     )
 
-# Plot centroids with distinct markers if plot_centroids is True
 if args.plot_centroids:
     for i, cls in enumerate(selected_classes):
         mask = centroid_labels_filtered == cls
@@ -169,7 +154,6 @@ plt.title(f"{args.dim_reduction_method} of Selected Classes with Model Centroids
 plt.legend()
 plt.grid(True)
 
-# Save plot to output directory
 os.makedirs(args.output_dir, exist_ok=True)
 output_path = os.path.join(
     args.output_dir,
