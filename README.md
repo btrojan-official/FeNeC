@@ -80,7 +80,7 @@ source .venv/bin/activate
 
 Method **FeNeC.fit** that fits our model to training data takes two arguments:
 - X_train - train data of shape (num_train_samples, num_features)
-- y_train - train data labels of shape (num_train_samples, num_features)
+- y_train - train data labels of shape (num_train_samples)
 
 Method **FeNeC.predict** that predicts the class of given test samples takes one argument:
 - X_test - test data of shape (num_test_samples, num_features)
