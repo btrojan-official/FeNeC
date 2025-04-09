@@ -5,7 +5,6 @@ import pandas as pd
 
 
 def get_top_parameters(csv_path, output_folder):
-    # Read the CSV file
     df = pd.read_csv(csv_path, delimiter=";")
     df = df.sort_values(by="last_task_accuracy", ascending=False)
     df = df.drop_duplicates(subset="last_task_accuracy")

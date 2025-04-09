@@ -75,7 +75,6 @@ def build_config_from_row(row, model):
     Extend or adjust for 'vit' if needed (with appropriate parameter columns).
     """
     if model == "resnet":
-        # Use columns as found in your CSV (like 'knn_k', 'kmeans_k', etc.)
         return {
             "metric": "mahalanobis",
             "weight": "distance",
@@ -108,7 +107,7 @@ def build_config_from_row(row, model):
             "use_logits_mode_0": False,
         }
 
-    else:  # For vit or other, adjust parameters as needed
+    else:
         raise NotImplementedError(
             "Model configuration for this scenario is not defined."
         )
@@ -119,7 +118,6 @@ def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
     Loads the dataset from 'dataset_path', instantiates a GradKNN model using 'config',
     trains across 'num_of_tasks', and returns the accuracy on each task and the average accuracy.
     """
-    # Decide on device
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     elif torch.cuda.is_available():
@@ -138,18 +136,15 @@ def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
     model = FeNeC(config, device=device)
 
     accuracies = []
-    # Train on all tasks
     for task_idx in range(num_of_tasks):
         X_train, y_train, X_test, y_test, _, _ = data_loader.get_data(task_idx)
         model.fit(X_train, y_train)
 
-        # Evaluate on the current task
         predictions = model.predict(X_test)
         correct = torch.sum((y_test.flatten().to(device) == predictions).int())
         accuracy = (correct / X_test.shape[0] * 100).item()
         accuracies.append(accuracy)
 
-    # Return last task accuracy and average accuracy across all tasks
     last_task_accuracy = accuracies[-1]
     avg_accuracy = sum(accuracies) / len(accuracies)
     return last_task_accuracy, avg_accuracy
@@ -158,16 +153,13 @@ def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
 def main():
     args = parse_args()
 
-    # Read the CSV containing best hyperparameters
     df = pd.read_csv(args.best_hyperparameters_file, delimiter=";")
 
     results = []
     for _, row in df.iterrows():
         print(f"Processing row")
-        # Build config from row
         config = build_config_from_row(row, args.model)
 
-        # Evaluate on 3 runs/data subfolders
         last_acc_1, avg_acc_1 = run_evaluation(
             args.dataset, config, args.num_of_tasks, args.name1, args.sufix
         )
@@ -178,11 +170,9 @@ def main():
             args.dataset, config, args.num_of_tasks, args.name3, args.sufix
         )
 
-        # Compute average of last task accuracies and average of average accuracies
         avg_last_task_acc = (last_acc_1 + last_acc_2 + last_acc_3) / 3.0
         avg_of_avg_acc = (avg_acc_1 + avg_acc_2 + avg_acc_3) / 3.0
 
-        # Copy the original row data and append new columns
         new_row = row.to_dict()
         new_row["last_task_accuracy_name1"] = last_acc_1
         new_row["last_task_accuracy_name2"] = last_acc_2
@@ -194,7 +184,6 @@ def main():
         new_row["average_of_average_accuracy"] = avg_of_avg_acc
         results.append(new_row)
 
-    # Save augmented results to CSV
     results_df = pd.DataFrame(results)
     results_df.to_csv(args.output_file, index=False, sep=";")
 

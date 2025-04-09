@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import concurrent.futures
 import copy
@@ -9,14 +7,11 @@ import os
 
 import optuna
 import torch
-# Samplers (import as needed)
 from optuna.samplers import GPSampler, QMCSampler, TPESampler
 from optuna.visualization import (plot_contour, plot_optimization_history,
                                   plot_slice)
 
-from configs.config import \
-    config  # if you have a base config, though here we'll generate one dynamically
-# Your modules
+from configs.config import config
 from model import FeNeC
 from utils.other import GradKNNDataloader
 
@@ -51,7 +46,6 @@ def get_config(trial):
         "shrinkage_alpha_0": trial.suggest_float("shrinkage_alpha_0", 0.5, 2),
         "shrinkage_alpha_1": trial.suggest_float("shrinkage_alpha_1", 0.5, 2),
         "norm_in_mahalanobis": True,
-        # For 2 other resnet representations, k_kmeans remained high and k_knn low, hence the narrowing of values
         "knn_k": trial.suggest_int("knn_k", 1, 20),
         "use_kmeans": True,
         "kmeans_k": trial.suggest_int("kmeans_k", 20, 50),
@@ -91,7 +85,6 @@ def merge_models(model0, model1, trial_config, merged_device):
             dim=0,
         )
 
-    # (Optional) Set current_task to the sum of tasks from both models.
     merged_model.current_task = model0.current_task + model1.current_task
 
     return merged_model
@@ -100,7 +93,6 @@ def merge_models(model0, model1, trial_config, merged_device):
 def main():
     args = parse_args()
 
-    # Select optuna sampler
     if args.sampler == "QMCSampler":
         sampler = QMCSampler()
     elif args.sampler == "TPESampler":
@@ -108,7 +100,6 @@ def main():
     elif args.sampler == "GPSampler":
         sampler = GPSampler()
 
-    # Decide on device
     if torch.backends.mps.is_available():
         device = torch.device("mps")
     elif torch.cuda.is_available():
@@ -117,7 +108,6 @@ def main():
         device = torch.device("cpu")
     print(f"Using device: {device}")
 
-    # Prepare data loader once (this is optional; you can also do it in the objective if needed)
     data_loader = GradKNNDataloader(
         num_tasks=6,
         dataset_name=args.dataset,
@@ -135,41 +125,34 @@ def main():
             X_train, y_train, X_test, y_test, covariances, prototypes = (
                 data_loader.get_data(i)
             )
-            # Move data to the model's device.
+
             model.fit(X_train.to(model.device), y_train.to(model.device))
         return model
 
     def objective(trial):
         try:
-            # Sample config (if your get_config saves the config in the model, you might want to pass it to the merged model)
+
             trial_config = get_config(trial)
 
-            # Define two devices.
             device0 = torch.device("cuda:0")
             device1 = torch.device("cuda:1")
 
-            # Create two model instances (they share the same config) on separate GPUs.
             model0 = FeNeC(trial_config, device=device0)
             model1 = FeNeC(trial_config, device=device1)
 
-            # Split your 6 tasks between the two GPUs.
-            # For example: tasks 0-2 on GPU0, tasks 3-5 on GPU1.
             tasks0 = range(0, 3)
             tasks1 = range(3, 6)
 
-            # Run training concurrently on the two GPUs.
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 future0 = executor.submit(train_on_tasks, model0, tasks0)
                 future1 = executor.submit(train_on_tasks, model1, tasks1)
                 model0_trained = future0.result()
                 model1_trained = future1.result()
 
-            # Merge the models into a single instance on device0.
             merged_model = merge_models(
                 model0_trained, model1_trained, trial_config, merged_device=device0
             )
 
-            # Evaluate on the test set from the last task.
             X_train, y_train, X_test, y_test, covariances, prototypes = (
                 data_loader.get_data(5)
             )
@@ -185,14 +168,12 @@ def main():
             print(f"Error during trial: {e}")
             return 0.4
 
-    # Create study (tell optuna we want to maximize accuracy)
     db_name = f"optuna_resnet_imnetsubset.db"
     study = optuna.create_study(
         direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}"
     )
     study.optimize(objective, n_trials=args.num_of_trials)
 
-    # Save all results to a CSV file
     trials = study.trials
     with open(args.output_file, "w", newline="") as csvfile:
         fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
@@ -207,11 +188,9 @@ def main():
     print(f"Best accuracy: {study.best_trial.value}")
     print(f"Best params: {study.best_trial.params}")
 
-    # Create result directory if it does not exist
     if not os.path.exists(args.result_dir):
         os.makedirs(args.result_dir)
 
-    # Generate and save plots
     slice_fig = plot_slice(study)
     slice_fig.write_image(f"{args.result_dir}/plot_slice.png")
 

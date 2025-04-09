@@ -72,10 +72,8 @@ def main():
             input_filepath = os.path.join(args.input_dir, filename)
             df = pd.read_csv(input_filepath, delimiter=";")
 
-            # Determine model type from presence of 'tukey_lambda' column
             model = "resnet" if "tukey_lambda" in df.columns else "vit"
 
-            # Find the row with the best average accuracy
             df["average_of_average_accuracy"] = df["average_of_average_accuracy"].apply(
                 lambda x: float(str(x).replace(",", "."))
             )
