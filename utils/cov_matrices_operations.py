@@ -36,7 +36,7 @@ def matrix_shrinkage(cov_matrix, alpha_0, alpha_1, device):
 
     Returns:
         torch.Tensor: The shrinked covariance matrix with the same shape as the input covariance matrix.
-    
+
     Raises:
         AssertionError: If the covariance matrix is not square.
     """
@@ -89,7 +89,7 @@ def tukeys_transformation(x, tukey_lambda):
     Returns:
         torch.Tensor: The transformed tensor.
     """
-    
+
     if tukey_lambda != 0:
         return torch.pow(x, tukey_lambda)
     else:

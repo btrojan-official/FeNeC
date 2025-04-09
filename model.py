@@ -19,8 +19,8 @@ class FeNeC:
         Initializes the FeNeC continual learning model.
 
         Args:
-            config (dict): Configuration dictionary containing model parameters 
-                        such as metric type, KNN settings, shrinkage factors, 
+            config (dict): Configuration dictionary containing model parameters
+                        such as metric type, KNN settings, shrinkage factors,
                         and whether to use logits or not.
             device (str): Device to run the model on ('cpu', 'cuda' or 'mps').
 

@@ -55,7 +55,7 @@ def plot_method_scores(df: pd.DataFrame, title: str) -> None:
             linewidth=2,
             markersize=8,
             alpha=alpha,
-        ) 
+        )
         plt.fill_between(
             method_data["task"],
             method_data["mean_accuracy"] - method_data["std_accuracy"],

@@ -54,7 +54,7 @@ def mahalanobis(
     batch_size=4,
 ):
     """
-    Computes the pairwise Mahalanobis distances between test and training samples, 
+    Computes the pairwise Mahalanobis distances between test and training samples,
     using class-specific inverse covariance matrices.
 
     Args:
