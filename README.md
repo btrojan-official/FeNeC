@@ -37,7 +37,7 @@ https://github.com/gmum/FeNeC
 
 ## Python setup
 
-First clone the repository using git and after that enter the FeNeC directory
+First clone the repository using git and enter the FeNeC directory.
 ```bash
 git clone https://github.com/btrojan-official/FeNeC.git
 cd FeNeC
@@ -60,9 +60,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**Warning:** If you don't have cuda on your device, or you want to run code on other version of cuda than 12.4 you should manully change torch version in requirements.txt file!
+**Warning:** If you don't have cuda on your device, or you want to run code on other version of cuda than 12.4 you should manually change torch version in requirements.txt file!
 
-If you have already prepared the virtual enviroment, don't forget to activate it with commands below.
+If you have already prepared the virtual environment, don't forget to activate it with the commands below.
 
 ### Windows
 
@@ -98,7 +98,7 @@ python -m experiments.name_of_the_file_without_py --arg1 ... --arg2 ... --argn .
 
 ## FeNeC implementation
 
-The actual FeNeC model code is in the **model.py** file. With some other helper functions in files in *utils* directory.
+The FeNeC model code is in the **model.py** file. With some other helper functions implemented in the files inside of the *utils* directory.
 
 ## Contact
 
