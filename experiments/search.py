@@ -7,7 +7,6 @@ import os
 
 import optuna
 import torch
-
 from optuna.samplers import GPSampler, QMCSampler, TPESampler
 from optuna.visualization import (plot_contour, plot_optimization_history,
                                   plot_slice)

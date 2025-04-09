@@ -180,7 +180,7 @@ def main():
             new_row[f"accuracy_task_{i+1}_name1"] = accs_1[i]
             new_row[f"accuracy_task_{i+1}_name2"] = accs_2[i]
             new_row[f"accuracy_task_{i+1}_name3"] = accs_3[i]
-            
+
         new_row["last_task_accuracy_name1"] = accs_1[-1]
         new_row["last_task_accuracy_name2"] = accs_2[-1]
         new_row["last_task_accuracy_name3"] = accs_3[-1]

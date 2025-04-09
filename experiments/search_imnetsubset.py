@@ -7,12 +7,11 @@ import os
 
 import optuna
 import torch
-
 from optuna.samplers import GPSampler, QMCSampler, TPESampler
 from optuna.visualization import (plot_contour, plot_optimization_history,
                                   plot_slice)
 
-from configs.config import config 
+from configs.config import config
 from model import FeNeC
 from utils.other import GradKNNDataloader
 
