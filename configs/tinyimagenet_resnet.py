@@ -2,14 +2,14 @@ config = {
     "metric": "mahalanobis",  # ["euclidean", "mahalanobis"]
     "weight": "uniform",  # ["uniform", "distance"]
     "use_tukey": True,
-    "tukey_lambda": 0.377,
+    "tukey_lambda": 0.426125531097545,
     "num_of_shrinkages": 2,
-    "shrinkage_alpha_0": 0.886,
-    "shrinkage_alpha_1": 0.896,
+    "shrinkage_alpha_0": 1.00603463646303,
+    "shrinkage_alpha_1": 1.31322254810227,
     "norm_in_mahalanobis": True,
     "knn_k": 1,
     "use_kmeans": True,  # if this is set to false, our method acts like a normal knn algorithm
-    "kmeans_k": 47,
+    "kmeans_k": 1,
     "sklearn_seed": 42,
     "use_logits": False,
     "train_only_task_0": True,
