@@ -4,6 +4,18 @@ import h5py
 import numpy as np
 
 def calculate_bwt(acc_matrix, num_tasks, num_classes_task_0, num_classes_per_task):
+    """
+    acc_matrix: shape (num_tasks, num_classes)
+    """
+    acc_matrix = np.asarray(acc_matrix)
+    if acc_matrix.ndim == 0:
+        raise ValueError("acc_matrix is a scalar, not an array. Check input data.")
+    if acc_matrix.ndim == 1:
+        # Only one task, shape (num_classes,)
+        acc_matrix = acc_matrix[None, :]
+    if acc_matrix.shape[0] != num_tasks:
+        raise ValueError(f"acc_matrix shape {acc_matrix.shape} does not match num_tasks={num_tasks}")
+
     bwt_list = []
     # Task 0
     bwt_list.append(
@@ -11,8 +23,8 @@ def calculate_bwt(acc_matrix, num_tasks, num_classes_task_0, num_classes_per_tas
     )
     # Subsequent tasks
     for i in range(1, num_tasks-1):
-        start = i * num_classes_per_task + num_classes_task_0 - num_classes_per_task
-        end = i * num_classes_per_task + num_classes_task_0
+        start = num_classes_task_0 + (i-1)*num_classes_per_task
+        end = num_classes_task_0 + i*num_classes_per_task
         bwt_list.append(
             np.mean(acc_matrix[-1][start:end]) - np.mean(acc_matrix[i][start:end])
         )
@@ -46,6 +58,10 @@ def main():
             with h5py.File(os.path.join(seed_dir, task_file), "r") as f:
                 if "info" in f and "accuracy" in f["info"].attrs:
                     acc = f["info"].attrs["accuracy"]
+                    acc = np.array(acc)
+                    if acc.ndim == 0:
+                        # Scalar, make it shape (1,)
+                        acc = np.array([acc])
                     acc_matrix.append(acc)
                 else:
                     raise ValueError(f"Missing accuracy in {os.path.join(seed_dir, task_file)}")
