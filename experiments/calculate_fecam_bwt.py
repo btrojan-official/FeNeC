@@ -18,7 +18,7 @@ Directory layout expected:
 
 Each task_i.hdf5 must contain:
     • "test_predictions"            – ndarray (N,) with model predictions
-    • "test_labels_for_predictions" – ndarray (N,) with ground-truth labels
+    • "y_test" – ndarray (N,) with ground-truth labels
 """
 
 import argparse
@@ -112,7 +112,7 @@ def load_preds_labels(path: str):
         raise FileNotFoundError(f"File not found: {path}")
     with h5py.File(path, "r") as f:
         preds = np.asarray(f["test_predictions"])
-        labels = np.asarray(f["test_labels_for_predictions"])
+        labels = np.asarray(f["y_test"])
     return preds, labels
 
 
