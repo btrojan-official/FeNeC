@@ -30,12 +30,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-print("Modules loaded")
 
-
-# ----------------------------------------------------------------------------- #
-#                              Command-line interface                           #
-# ----------------------------------------------------------------------------- #
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Compute backward transfer (BWT) for the old method."
@@ -86,9 +81,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-# ----------------------------------------------------------------------------- #
-#                              Helper functions                                 #
-# ----------------------------------------------------------------------------- #
 def total_num_classes(t: int, c0: int, ct: int) -> int:
     """Total number of classes after *t* tasks."""
     return c0 + (t - 1) * ct
@@ -157,9 +149,7 @@ def process_seed(
     return compute_bwt(acc_matrix, ranges)
 
 
-# ----------------------------------------------------------------------------- #
-#                                   Main                                        #
-# ----------------------------------------------------------------------------- #
+
 def main() -> None:
     args = parse_args()
 
@@ -184,12 +174,10 @@ def main() -> None:
         print("No valid results – exiting.")
         sys.exit(1)
 
-    # Aggregate statistics
     df = pd.DataFrame(results)
     df["mean_bwt"] = df["bwt"].mean()
-    df["std_bwt"] = df["bwt"].std(ddof=0)  # population std for completeness
+    df["std_bwt"] = df["bwt"].std(ddof=0)
 
-    # Console summary
     print("\n=== Summary ===")
     for _, row in df.iterrows():
         print(f"{row['seed']}: {row['bwt']:.3f}")
