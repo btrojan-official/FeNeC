@@ -83,12 +83,6 @@ def parse_args() -> argparse.Namespace:
         default=".hdf5",
         help='File suffix for task files (default: ".hdf5").',
     )
-    parser.add_argument(
-        "--output_file",
-        type=str,
-        required=True,
-        help="Destination CSV for the results.",
-    )
     return parser.parse_args()
 
 
