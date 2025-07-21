@@ -1,6 +1,5 @@
 import argparse
 import concurrent.futures
-import copy
 import csv
 import json
 import os
@@ -54,7 +53,14 @@ def get_config(trial):
         "use_kmeans": True,
         "kmeans_k": trial.suggest_int("kmeans_k", 20, 50),
         "sklearn_seed": 42,
-        "use_logits_mode_0": False,
+        "use_logits": False,
+        "train_only_task_0": True,
+        "logits_n_samples": 3,
+        "logits_train_epochs": 10,
+        "logits_batch_size": 64,
+        "logits_learning_rate": 0.003,
+        "logits_regularization_strength": 0,
+        "logits_patience": 10,
     }
 
 
@@ -99,22 +105,22 @@ def main():
         if not isinstance(configs_list, list):
             raise ValueError("--configs_json should be a JSON list of dicts")
     else:
-        configs_list = None
+        configs_list = []
 
     if args.sampler == "QMCSampler":
         sampler = QMCSampler()
     elif args.sampler == "TPESampler":
         sampler = TPESampler()
-    elif args.sampler == "GPSampler":
+    else:
         sampler = GPSampler()
 
     if torch.backends.mps.is_available():
-        device = torch.device("mps")
+        default_device = torch.device("mps")
     elif torch.cuda.is_available():
-        device = torch.device("cuda")
+        default_device = torch.device("cuda")
     else:
-        device = torch.device("cpu")
-    print(f"Using device: {device}")
+        default_device = torch.device("cpu")
+    print(f"Using device: {default_device}")
 
     data_loader = FeNeCDataLoader(
         num_tasks=6,
@@ -126,53 +132,47 @@ def main():
 
     def train_on_tasks(model, task_indices):
         for i in task_indices:
-            X_train, y_train, X_test, y_test, covariances, prototypes = (
-                data_loader.get_data(i)
-            )
+            X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(i)
             model.fit(X_train.to(model.device), y_train.to(model.device))
         return model
 
     def objective(trial):
         try:
-            if configs_list is not None:
-                idx = trial.suggest_int("config_index", 0, len(configs_list) - 1)
+            if configs_list:
+                use_fixed = trial.suggest_categorical("use_fixed_config", [False, True])
+            else:
+                use_fixed = False
+
+            if use_fixed:
+                idx = trial.suggest_int("fixed_config_index", 0, len(configs_list) - 1)
                 trial_config = configs_list[idx]
             else:
                 trial_config = get_config(trial)
 
             device0 = torch.device("cuda:0")
             device1 = torch.device("cuda:1")
-
             model0 = FeNeC(trial_config, device=device0)
             model1 = FeNeC(trial_config, device=device1)
 
             tasks0 = range(0, 3)
             tasks1 = range(3, 6)
-
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-                future0 = executor.submit(train_on_tasks, model0, tasks0)
-                future1 = executor.submit(train_on_tasks, model1, tasks1)
-                model0_trained = future0.result()
-                model1_trained = future1.result()
+                f0 = executor.submit(train_on_tasks, model0, tasks0)
+                f1 = executor.submit(train_on_tasks, model1, tasks1)
+                m0 = f0.result()
+                m1 = f1.result()
 
-            merged_model = merge_models(
-                model0_trained, model1_trained, trial_config, merged_device=device0
-            )
+            merged = merge_models(m0, m1, trial_config, merged_device=device0)
+            X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(5)
+            preds = merged.predict(X_test.to(merged.device))
 
-            X_train, y_train, X_test, y_test, covariances, prototypes = (
-                data_loader.get_data(5)
-            )
-            predictions = merged_model.predict(X_test.to(merged_model.device))
-
-            correct = torch.sum(
-                (y_test.flatten().to(merged_model.device) == predictions).int()
-            )
-            acc = (correct.item() / X_test.shape[0]) * 100
-            return acc
+            correct = torch.sum((y_test.flatten().to(merged.device) == preds).int())
+            accuracy = (correct.item() / X_test.shape[0]) * 100
+            return accuracy
 
         except Exception as e:
             print(f"Error during trial: {e}")
-            return 0.4
+            return 0.0
 
     db_name = "optuna_resnet_imnetsubset.db"
     study = optuna.create_study(
@@ -185,27 +185,18 @@ def main():
         fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for trial in trials:
-            row = {"last_task_accuracy": trial.value}
-            row.update(trial.params)
+        for t in trials:
+            row = {"last_task_accuracy": t.value}
+            row.update(t.params)
             writer.writerow(row)
 
     print(f"Best accuracy: {study.best_trial.value}")
     print(f"Best params: {study.best_trial.params}")
 
-    if not os.path.exists(args.result_dir):
-        os.makedirs(args.result_dir)
-
-    slice_fig = plot_slice(study)
-    slice_fig.write_image(f"{args.result_dir}/plot_slice.png")
-
-    optimization_history_fig = plot_optimization_history(study)
-    optimization_history_fig.write_image(
-        f"{args.result_dir}/plot_optimization_history.png"
-    )
-
-    contour_fig = plot_contour(study)
-    contour_fig.write_image(f"{args.result_dir}/plot_contour.png")
+    os.makedirs(args.result_dir, exist_ok=True)
+    plot_slice(study).write_image(f"{args.result_dir}/plot_slice.png")
+    plot_optimization_history(study).write_image(f"{args.result_dir}/plot_optimization_history.png")
+    plot_contour(study).write_image(f"{args.result_dir}/plot_contour.png")
 
 
 if __name__ == "__main__":
