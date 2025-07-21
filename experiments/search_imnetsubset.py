@@ -121,7 +121,7 @@ def main():
         dataset_name=args.dataset,
         load_covariances=True,
         load_prototypes=False,
-        dataset_path="/shared/sets/datasets/ImageNet-Subset",
+        dataset_path="/shared/results/kksiazek/FeCAM/ImageNet-Subset/",
     )
 
     def train_on_tasks(model, task_indices):
