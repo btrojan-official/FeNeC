@@ -115,7 +115,7 @@ def build_config_from_row(row, model):
 
 def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
     """
-    Loads the dataset from 'dataset_path', instantiates a GradKNN model using 'config',
+    Loads the dataset from 'dataset_path', instantiates a FeNeC model using 'config',
     trains across 'num_of_tasks', and returns the accuracy on each task and the average accuracy.
     """
     if torch.backends.mps.is_available():
@@ -125,7 +125,7 @@ def run_evaluation(dataset_path, config, num_of_tasks, name, sufix):
     else:
         device = torch.device("cpu")
 
-    data_loader = GradKNNDataloader(
+    data_loader = FeNeCDataLoader(
         num_tasks=num_of_tasks,
         dataset_name=name,
         dataset_path=dataset_path,

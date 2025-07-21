@@ -116,7 +116,7 @@ def main():
         device = torch.device("cpu")
     print(f"Using device: {device}")
 
-    data_loader = GradKNNDataloader(
+    data_loader = FeNeCDataLoader(
         num_tasks=6,
         dataset_name=args.dataset,
         load_covariances=True,
