@@ -8,10 +8,8 @@ import os
 import optuna
 import torch
 from optuna.samplers import GPSampler, QMCSampler, TPESampler
-from optuna.visualization import (plot_contour, plot_optimization_history,
-                                  plot_slice)
+from optuna.visualization import plot_contour, plot_optimization_history, plot_slice
 
-from configs.config import config
 from model import FeNeC
 from utils.other import GradKNNDataloader
 
@@ -32,6 +30,12 @@ def parse_args():
         type=str,
         required=True,
         help="Directory to save the result plots",
+    )
+    parser.add_argument(
+        "--configs_json",
+        type=str,
+        required=False,
+        help="JSON string: lista obiektów config do kategorycznego przeszukania przez Optunę",
     )
     return parser.parse_args()
 
@@ -61,21 +65,19 @@ def merge_models(model0, model1, trial_config, merged_device):
     - For mahalanobis metric, concatenates the covMatrices.
     - If using logits, averages the learned parameters.
     """
-    # Create a new model instance on merged_device
     merged_model = FeNeC(trial_config, device=merged_device)
 
-    # Merge training data: assume both models have non-None X_train and y_train.
     merged_model.X_train = torch.cat(
         [model0.X_train.to(merged_device), model1.X_train.to(merged_device)], dim=0
     )
-
     merged_model.y_train = torch.cat(
         [model0.y_train.to(merged_device), model1.y_train.to(merged_device)], dim=0
     )
 
-    # Merge covMatrices if needed.
-    if merged_model.metric == "mahalanobis" and (
-        model0.covMatrices is not None and model1.covMatrices is not None
+    if (
+        merged_model.metric == "mahalanobis"
+        and model0.covMatrices is not None
+        and model1.covMatrices is not None
     ):
         merged_model.covMatrices = torch.cat(
             [
@@ -86,12 +88,18 @@ def merge_models(model0, model1, trial_config, merged_device):
         )
 
     merged_model.current_task = model0.current_task + model1.current_task
-
     return merged_model
 
 
 def main():
     args = parse_args()
+
+    if args.configs_json:
+        configs_list = json.loads(args.configs_json)
+        if not isinstance(configs_list, list):
+            raise ValueError("--configs_json should be a JSON list of dicts")
+    else:
+        configs_list = None
 
     if args.sampler == "QMCSampler":
         sampler = QMCSampler()
@@ -117,22 +125,20 @@ def main():
     )
 
     def train_on_tasks(model, task_indices):
-        """
-        Runs the model's fit() method on a subset of tasks.
-        Each call updates the model's internal state (e.g., accumulating training data).
-        """
         for i in task_indices:
             X_train, y_train, X_test, y_test, covariances, prototypes = (
                 data_loader.get_data(i)
             )
-
             model.fit(X_train.to(model.device), y_train.to(model.device))
         return model
 
     def objective(trial):
         try:
-
-            trial_config = get_config(trial)
+            if configs_list is not None:
+                idx = trial.suggest_int("config_index", 0, len(configs_list) - 1)
+                trial_config = configs_list[idx]
+            else:
+                trial_config = get_config(trial)
 
             device0 = torch.device("cuda:0")
             device1 = torch.device("cuda:1")
@@ -168,7 +174,7 @@ def main():
             print(f"Error during trial: {e}")
             return 0.4
 
-    db_name = f"optuna_resnet_imnetsubset.db"
+    db_name = "optuna_resnet_imnetsubset.db"
     study = optuna.create_study(
         direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}"
     )
@@ -178,7 +184,6 @@ def main():
     with open(args.output_file, "w", newline="") as csvfile:
         fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
         writer.writeheader()
         for trial in trials:
             row = {"last_task_accuracy": trial.value}
