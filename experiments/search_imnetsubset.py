@@ -34,7 +34,7 @@ def parse_args():
         "--configs_json",
         type=str,
         required=False,
-        help="JSON string: lista obiektów config do kategorycznego przeszukania przez Optunę",
+        help="JSON string: lista pełnych configów do jednorazowego przetestowania",
     )
     return parser.parse_args()
 
@@ -137,57 +137,56 @@ def main():
         return model
 
     def objective(trial):
-        try:
-            if configs_list:
-                use_fixed = trial.suggest_categorical("use_fixed_config", [False, True])
-            else:
-                use_fixed = False
+        if "weight" in trial.params:
+            trial_config = dict(trial.params)
+        else:
+            trial_config = get_config(trial)
 
-            if use_fixed:
-                idx = trial.suggest_int("fixed_config_index", 0, len(configs_list) - 1)
-                trial_config = configs_list[idx]
-            else:
-                trial_config = get_config(trial)
+        device0 = torch.device("cuda:0")
+        device1 = torch.device("cuda:1")
+        model0 = FeNeC(trial_config, device=device0)
+        model1 = FeNeC(trial_config, device=device1)
 
-            device0 = torch.device("cuda:0")
-            device1 = torch.device("cuda:1")
-            model0 = FeNeC(trial_config, device=device0)
-            model1 = FeNeC(trial_config, device=device1)
+        tasks0 = range(0, 3)
+        tasks1 = range(3, 6)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            f0 = executor.submit(train_on_tasks, model0, tasks0)
+            f1 = executor.submit(train_on_tasks, model1, tasks1)
+            m0 = f0.result()
+            m1 = f1.result()
 
-            tasks0 = range(0, 3)
-            tasks1 = range(3, 6)
-            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
-                f0 = executor.submit(train_on_tasks, model0, tasks0)
-                f1 = executor.submit(train_on_tasks, model1, tasks1)
-                m0 = f0.result()
-                m1 = f1.result()
+        merged = merge_models(m0, m1, trial_config, merged_device=device0)
+        X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(5)
+        preds = merged.predict(X_test.to(merged.device))
 
-            merged = merge_models(m0, m1, trial_config, merged_device=device0)
-            X_train, y_train, X_test, y_test, covariances, prototypes = data_loader.get_data(5)
-            preds = merged.predict(X_test.to(merged.device))
-
-            correct = torch.sum((y_test.flatten().to(merged.device) == preds).int())
-            accuracy = (correct.item() / X_test.shape[0]) * 100
-            return accuracy
-
-        except Exception as e:
-            print(f"Error during trial: {e}")
-            return 0.0
+        correct = torch.sum((y_test.flatten().to(merged.device) == preds).int())
+        accuracy = (correct.item() / X_test.shape[0]) * 100
+        return accuracy
 
     db_name = "optuna_resnet_imnetsubset.db"
     study = optuna.create_study(
         direction="maximize", sampler=sampler, storage=f"sqlite:///{db_name}"
     )
+
+    for cfg in configs_list:
+        study.enqueue_trial(cfg, skip_if_exists=True)
+
     study.optimize(objective, n_trials=args.num_of_trials)
 
+
     trials = study.trials
+    all_keys = set()
+    for t in trials:
+        all_keys.update(t.params.keys())
+    fieldnames = list(all_keys) + ["last_task_accuracy"]
+
+    os.makedirs(os.path.dirname(args.output_file) or ".", exist_ok=True)
     with open(args.output_file, "w", newline="") as csvfile:
-        fieldnames = list(trials[0].params.keys()) + ["last_task_accuracy"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for t in trials:
-            row = {"last_task_accuracy": t.value}
-            row.update(t.params)
+            row = {k: t.params.get(k) for k in all_keys}
+            row["last_task_accuracy"] = t.value
             writer.writerow(row)
 
     print(f"Best accuracy: {study.best_trial.value}")
