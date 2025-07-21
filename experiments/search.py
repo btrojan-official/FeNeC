@@ -13,7 +13,7 @@ from optuna.visualization import (plot_contour, plot_optimization_history,
 
 from configs.config import config
 from model import FeNeC
-from utils.other import GradKNNDataloader
+from utils.loader import FeNeCDataLoader
 
 
 def parse_args():

@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 
 from model import FeNeC
-from utils.other import GradKNNDataloader
+from utils.loader import FeNeCDataLoader
 
 print("Loaded modules")
 

@@ -11,7 +11,7 @@ from optuna.samplers import GPSampler, QMCSampler, TPESampler
 from optuna.visualization import plot_contour, plot_optimization_history, plot_slice
 
 from model import FeNeC
-from utils.other import GradKNNDataloader
+from utils.loader import FeNeCDataLoader
 
 
 def parse_args():
