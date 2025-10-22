@@ -3,7 +3,7 @@ import numpy as np
 
 from model import FeNeC
 
-from configs.imagenet_subset_resnet import config
+from configs.cifar_vit import config
 from utils.loader import FeNeCDataLoader
 
 if torch.cuda.is_available():
