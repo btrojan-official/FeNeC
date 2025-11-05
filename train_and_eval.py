@@ -48,27 +48,11 @@ for task_id in range(num_tasks):
     model.fit(X_train, y_train)
     predictions = model.predict(X_test)
 
-    # Overall accuracy
     accuracy = (
         torch.sum((y_test.flatten().to(device) == predictions).int()) / X_test.shape[0]
     ).item()
     accuracies.append(accuracy)
     print(f"Task {task_id} - Accuracy: {accuracy}")
 
-    # Per-class accuracy
-    y_test_cpu = y_test.flatten().cpu()
-    preds_cpu = predictions.cpu()
-
-    for cls in range(num_classes):
-        mask = y_test_cpu == cls
-        if mask.sum().item() == 0:
-            acc = np.nan  # No samples for this class
-        else:
-            correct = (preds_cpu[mask] == cls).sum().item()
-            acc = correct / mask.sum().item()
-
-        per_class_accuracy_matrix[task_id, cls] = acc
-
-# Print average accuracy
 print(f"\nAverage incremental accuracy: {sum(accuracies)/len(accuracies)}")
 
